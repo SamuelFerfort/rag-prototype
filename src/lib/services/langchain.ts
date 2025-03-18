@@ -1,11 +1,11 @@
 import { Document } from "langchain/document";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
+import { UnstructuredLoader } from "@langchain/community/document_loaders/fs/unstructured";
 import { pinecone } from "./pinecone";
-
-// For PDF parsing
-import pdfParse from "pdf-parse";
-// For DOCX parsing
-import mammoth from "mammoth";
+import { openai } from "./openai";
+import * as fs from "fs";
+import * as path from "path";
+import * as os from "os";
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { PineconeStore } from "@langchain/pinecone";
 
@@ -15,12 +15,18 @@ const embeddings = new OpenAIEmbeddings({
   modelName: "text-embedding-3-small",
 });
 
+// Unstructured API configuration
+const UNSTRUCTURED_API_KEY = process.env.UNSTRUCTURED_API_KEY;
+const UNSTRUCTURED_API_URL =
+  process.env.UNSTRUCTURED_API_URL ||
+  "https://api.unstructuredapp.io/general/v0/general";
+
 /**
  * Process a text document
  */
 export async function processDocument(
   text: string,
-  metadata: Record<string, any> = {}
+  metadata: Record<string, any> = {},
 ) {
   try {
     // Create a LangChain document
@@ -50,7 +56,7 @@ export async function processDocument(
       chunkCount: docs.length,
       status: "success",
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error processing document:", error);
     throw error instanceof Error
       ? error
@@ -59,50 +65,84 @@ export async function processDocument(
 }
 
 /**
- * Process a binary document (PDF, DOCX)
+ * Process a binary document (PDF, DOCX, etc.) using Unstructured
  */
 export async function processDocumentBuffer(
   buffer: ArrayBuffer,
-  metadata: Record<string, any> = {}
+  metadata: Record<string, any> = {},
 ) {
   try {
-    // Extract text based on file type
-    let extractedText = "";
-
-    if (metadata.type === "pdf") {
-      // Parse PDF
-      const data = await pdfParse(Buffer.from(buffer));
-      extractedText = data.text;
-
-      // Add page count to metadata
-      metadata.pageCount = data.numpages;
-    } else if (metadata.type === "docx") {
-      // Parse DOCX
-      const result = await mammoth.extractRawText({
-        arrayBuffer: buffer,
-      });
-      extractedText = result.value;
-
-      // Add any warnings to metadata
-      if (result.messages.length > 0) {
-        metadata.parsingWarnings = result.messages;
-      }
-    } else {
-      throw new Error(`Unsupported binary file type: ${metadata.type}`);
-    }
-
-    // If extraction failed, throw error
-    if (!extractedText || extractedText.trim().length === 0) {
-      throw new Error(`Failed to extract text from ${metadata.type} file`);
-    }
-
-    console.log(
-      `Extracted ${extractedText.length} characters from ${metadata.type} file`
+    // Create a temporary file from the buffer
+    const tempDir = os.tmpdir();
+    const fileExtension =
+      metadata.type === "pdf"
+        ? ".pdf"
+        : metadata.type === "docx"
+          ? ".docx"
+          : ".txt";
+    const tempFilePath = path.join(
+      tempDir,
+      `temp_${Date.now()}${fileExtension}`,
     );
 
-    // Now process the extracted text
-    return processDocument(extractedText, metadata);
-  } catch (error) {
+    // Write buffer to temp file
+    fs.writeFileSync(tempFilePath, Buffer.from(buffer));
+
+    try {
+      // Process with Unstructured - using correct options
+      const loader = new UnstructuredLoader(tempFilePath, {
+        apiKey: UNSTRUCTURED_API_KEY,
+        apiUrl: UNSTRUCTURED_API_URL,
+        // Strategy options: "hi_res" (more accurate) or "fast" (quicker processing)
+        strategy: "hi_res",
+        // These are proper options for the UnstructuredLoader
+        includePageBreaks: true,
+        chunkingStrategy: "by_title",
+      });
+
+      // Load documents with structure preserved
+      const docs = await loader.load();
+
+      // Add our custom metadata to each document
+      const enhancedDocs = docs.map((doc) => {
+        return new Document({
+          pageContent: doc.pageContent,
+          metadata: {
+            ...doc.metadata,
+            ...metadata,
+            source: metadata.filename || "unknown",
+            timestamp: new Date().toISOString(),
+          },
+        });
+      });
+
+      console.log(
+        `Extracted ${enhancedDocs.length} elements from ${metadata.type} file`,
+      );
+
+      // Get Pinecone index
+      const index = pinecone.Index(process.env.PINECONE_INDEX!);
+
+      // Store structured documents in Pinecone
+      await PineconeStore.fromDocuments(enhancedDocs, embeddings, {
+        pineconeIndex: index,
+      });
+
+      // Clean up temporary file
+      fs.unlinkSync(tempFilePath);
+
+      return {
+        chunkCount: enhancedDocs.length,
+        status: "success",
+      };
+    } catch (processError) {
+      // Clean up temp file if there's an error
+      if (fs.existsSync(tempFilePath)) {
+        fs.unlinkSync(tempFilePath);
+      }
+      throw processError;
+    }
+  } catch (error: unknown) {
     console.error("Error processing binary document:", error);
     throw error instanceof Error
       ? error
@@ -126,16 +166,14 @@ export async function searchSimilarDocuments(query: string, topK = 3) {
     // Use similaritySearchWithScore instead of similaritySearch
     const results = await vectorStore.similaritySearchWithScore(query, topK);
 
-    // Format results with actual scores and ensure unique IDs
-    return results.map(([doc, score], index) => ({
-      id: `${
-        doc.metadata.id || doc.metadata.source || "unknown"
-      }_chunk_${index}`,
+    // Format results with actual scores
+    return results.map(([doc, score]) => ({
+      id: doc.metadata.id || doc.metadata.source || "unknown",
       text: doc.pageContent,
       score: score,
       metadata: doc.metadata,
     }));
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error searching documents:", error);
     throw error instanceof Error
       ? error

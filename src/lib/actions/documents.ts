@@ -23,9 +23,12 @@ export async function uploadDocument(
     const cleanFilename = filename.replace(/\W+/g, "_").toLowerCase();
     const docId = `doc_${cleanFilename}_${timestamp}`;
 
-    // Handle binary files (PDF, DOCX)
-    if (fileType === "pdf" || fileType === "docx") {
-      // Parse the JSON payload
+    // Determine if this is a binary file payload
+    const isBinaryPayload =
+      fileType === "pdf" || fileType === "docx" || fileType === "pptx";
+
+    if (isBinaryPayload) {
+      // Parse the JSON payload for binary files
       let payload: BinaryFilePayload;
       try {
         payload = JSON.parse(content) as BinaryFilePayload;
@@ -36,7 +39,7 @@ export async function uploadDocument(
       // Convert array back to buffer
       const buffer = new Uint8Array(payload.buffer).buffer;
 
-      // Process with appropriate parser
+      // Process with Unstructured
       const result = await processDocumentBuffer(buffer, {
         id: docId,
         filename,
@@ -71,8 +74,7 @@ export async function uploadDocument(
       chunkCount: result.chunkCount,
       timestamp,
     };
-  } catch (error) {
-    // Using error: unknown to satisfy TypeScript
+  } catch (error: unknown) {
     console.error("Document upload error:", error);
     throw error instanceof Error
       ? error
