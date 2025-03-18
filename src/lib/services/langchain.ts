@@ -1,16 +1,13 @@
 import { Document } from "langchain/document";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { pinecone } from "./pinecone";
-// Import PDF.js
-import * as pdfjsLib from "pdfjs-dist";
+
+// For PDF parsing
+import pdfParse from "pdf-parse";
 // For DOCX parsing
 import mammoth from "mammoth";
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { PineconeStore } from "@langchain/pinecone";
-
-// Set the worker source for PDF.js
-// This is crucial for Node.js environment in Next.js
-pdfjsLib.GlobalWorkerOptions.workerSrc = "pdfjs-dist/build/pdf.worker.mjs";
 
 // Initialize OpenAI embeddings
 const embeddings = new OpenAIEmbeddings({
@@ -53,7 +50,7 @@ export async function processDocument(
       chunkCount: docs.length,
       status: "success",
     };
-  } catch (error: unknown) {
+  } catch (error) {
     console.error("Error processing document:", error);
     throw error instanceof Error
       ? error
@@ -69,60 +66,26 @@ export async function processDocumentBuffer(
   metadata: Record<string, any> = {},
 ) {
   try {
+    // Extract text based on file type
     let extractedText = "";
 
     if (metadata.type === "pdf") {
-      try {
-        // Load the PDF document with PDF.js
-        const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
-        const pageCount = pdf.numPages;
-        metadata.pageCount = pageCount;
+      // Parse PDF
+      const data = await pdfParse(Buffer.from(buffer));
+      extractedText = data.text;
 
-        // Extract text from all pages
-        const textPromises = [];
-        for (let i = 1; i <= pageCount; i++) {
-          textPromises.push(
-            pdf.getPage(i).then((page) =>
-              page.getTextContent().then((content) =>
-                content.items
-                  .map((item: any) => item.str)
-                  .join(" ")
-                  .trim(),
-              ),
-            ),
-          );
-        }
-
-        // Combine text from all pages
-        const textArray = await Promise.all(textPromises);
-        extractedText = textArray.join("\n\n");
-      } catch (pdfError) {
-        console.error("PDF extraction error:", pdfError);
-        throw new Error(
-          `Failed to extract text from PDF: ${
-            pdfError instanceof Error ? pdfError.message : "Unknown error"
-          }`,
-        );
-      }
+      // Add page count to metadata
+      metadata.pageCount = data.numpages;
     } else if (metadata.type === "docx") {
-      try {
-        // Parse DOCX with mammoth
-        const result = await mammoth.extractRawText({
-          arrayBuffer: buffer,
-        });
-        extractedText = result.value;
+      // Parse DOCX
+      const result = await mammoth.extractRawText({
+        arrayBuffer: buffer,
+      });
+      extractedText = result.value;
 
-        // Add any warnings to metadata
-        if (result.messages.length > 0) {
-          metadata.parsingWarnings = result.messages;
-        }
-      } catch (docxError) {
-        console.error("DOCX extraction error:", docxError);
-        throw new Error(
-          `Failed to extract text from DOCX: ${
-            docxError instanceof Error ? docxError.message : "Unknown error"
-          }`,
-        );
+      // Add any warnings to metadata
+      if (result.messages.length > 0) {
+        metadata.parsingWarnings = result.messages;
       }
     } else {
       throw new Error(`Unsupported binary file type: ${metadata.type}`);
@@ -130,9 +93,7 @@ export async function processDocumentBuffer(
 
     // If extraction failed, throw error
     if (!extractedText || extractedText.trim().length === 0) {
-      throw new Error(
-        `Failed to extract text from ${metadata.type} file (empty content)`,
-      );
+      throw new Error(`Failed to extract text from ${metadata.type} file`);
     }
 
     console.log(
@@ -141,7 +102,7 @@ export async function processDocumentBuffer(
 
     // Now process the extracted text
     return processDocument(extractedText, metadata);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error("Error processing binary document:", error);
     throw error instanceof Error
       ? error
@@ -172,7 +133,7 @@ export async function searchSimilarDocuments(query: string, topK = 3) {
       score: score,
       metadata: doc.metadata,
     }));
-  } catch (error: unknown) {
+  } catch (error) {
     console.error("Error searching documents:", error);
     throw error instanceof Error
       ? error
