@@ -26,7 +26,7 @@ const UNSTRUCTURED_API_URL =
  */
 export async function processDocument(
   text: string,
-  metadata: Record<string, any> = {},
+  metadata: Record<string, any> = {}
 ) {
   try {
     // Create a LangChain document
@@ -37,8 +37,9 @@ export async function processDocument(
 
     // Split the document into chunks
     const textSplitter = new RecursiveCharacterTextSplitter({
-      chunkSize: 500,
-      chunkOverlap: 50,
+      chunkSize: 1500,
+      chunkOverlap: 200,
+      separators: ["\n\n", "\n", " ", ""], // Prioritize breaking at paragraph boundaries
     });
 
     const docs = await textSplitter.splitDocuments([doc]);
@@ -69,7 +70,7 @@ export async function processDocument(
  */
 export async function processDocumentBuffer(
   buffer: ArrayBuffer,
-  metadata: Record<string, any> = {},
+  metadata: Record<string, any> = {}
 ) {
   try {
     // Create a temporary file from the buffer
@@ -78,11 +79,11 @@ export async function processDocumentBuffer(
       metadata.type === "pdf"
         ? ".pdf"
         : metadata.type === "docx"
-          ? ".docx"
-          : ".txt";
+        ? ".docx"
+        : ".txt";
     const tempFilePath = path.join(
       tempDir,
-      `temp_${Date.now()}${fileExtension}`,
+      `temp_${Date.now()}${fileExtension}`
     );
 
     // Write buffer to temp file
@@ -90,14 +91,16 @@ export async function processDocumentBuffer(
 
     try {
       // Process with Unstructured - using correct options
+      // To this:
       const loader = new UnstructuredLoader(tempFilePath, {
         apiKey: UNSTRUCTURED_API_KEY,
         apiUrl: UNSTRUCTURED_API_URL,
-        // Strategy options: "hi_res" (more accurate) or "fast" (quicker processing)
         strategy: "hi_res",
-        // These are proper options for the UnstructuredLoader
         includePageBreaks: true,
         chunkingStrategy: "by_title",
+        maxCharacters: 2000,
+        combineUnderNChars: 1500, // combine elements under 1500 chars
+        newAfterNChars: 2000, //  start new chunk after 2000 chars
       });
 
       // Load documents with structure preserved
@@ -117,7 +120,7 @@ export async function processDocumentBuffer(
       });
 
       console.log(
-        `Extracted ${enhancedDocs.length} elements from ${metadata.type} file`,
+        `Extracted ${enhancedDocs.length} elements from ${metadata.type} file`
       );
 
       // Get Pinecone index
