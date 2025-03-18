@@ -32,12 +32,14 @@ export default function Editor() {
 
     setIsSearching(true);
     setStatus("Searching...");
+    setSearchResults([]);
     try {
       const results = await searchDocuments(query);
-      setSearchResults(results);
+      const sortedResults = [...results].sort((a, b) => b.score - a.score);
+      setSearchResults(sortedResults);
       setStatus(
-        results.length > 0
-          ? `Found ${results.length} results`
+        sortedResults.length > 0
+          ? `Found ${sortedResults.length} results`
           : "No results found"
       );
     } catch (error: any) {
@@ -136,7 +138,7 @@ export default function Editor() {
             <ul className="space-y-3">
               {searchResults.map((result, idx) => (
                 <li
-                  key={result.id || idx}
+                  key={`${result.id || "unknown"}_${idx}`}
                   className="border-b border-gray-700 pb-3"
                 >
                   <div

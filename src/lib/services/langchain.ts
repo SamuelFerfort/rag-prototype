@@ -20,7 +20,7 @@ const embeddings = new OpenAIEmbeddings({
  */
 export async function processDocument(
   text: string,
-  metadata: Record<string, any> = {},
+  metadata: Record<string, any> = {}
 ) {
   try {
     // Create a LangChain document
@@ -63,7 +63,7 @@ export async function processDocument(
  */
 export async function processDocumentBuffer(
   buffer: ArrayBuffer,
-  metadata: Record<string, any> = {},
+  metadata: Record<string, any> = {}
 ) {
   try {
     // Extract text based on file type
@@ -97,7 +97,7 @@ export async function processDocumentBuffer(
     }
 
     console.log(
-      `Extracted ${extractedText.length} characters from ${metadata.type} file`,
+      `Extracted ${extractedText.length} characters from ${metadata.type} file`
     );
 
     // Now process the extracted text
@@ -126,9 +126,11 @@ export async function searchSimilarDocuments(query: string, topK = 3) {
     // Use similaritySearchWithScore instead of similaritySearch
     const results = await vectorStore.similaritySearchWithScore(query, topK);
 
-    // Format results with actual scores
-    return results.map(([doc, score]) => ({
-      id: doc.metadata.id || doc.metadata.source || "unknown",
+    // Format results with actual scores and ensure unique IDs
+    return results.map(([doc, score], index) => ({
+      id: `${
+        doc.metadata.id || doc.metadata.source || "unknown"
+      }_chunk_${index}`,
       text: doc.pageContent,
       score: score,
       metadata: doc.metadata,
