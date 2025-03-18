@@ -1,13 +1,5 @@
-import OpenAI from "openai";
-import { Pinecone } from "@pinecone-database/pinecone";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-const pinecone = new Pinecone({
-  apiKey: process.env.PINECONE_API_KEY!,
-});
+import { pinecone } from "./services/pinecone";
+import { openai } from "./services/openai";
 
 export async function generateEmbedding(text: string) {
   const response = await openai.embeddings.create({

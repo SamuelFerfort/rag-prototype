@@ -22,6 +22,7 @@ export default function Editor() {
       }),
     ],
     content: "<p></p>",
+    immediatelyRender: true,
   });
 
   async function handleSearch() {
