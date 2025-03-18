@@ -6,11 +6,12 @@ import {
   storeEmbedding,
 } from "../embeddings";
 
-export async function searchDocuments(query: string) {
+export async function searchDocuments(
+  query: string,
+): Promise<{ id: string; text: string; score: number }[]> {
   if (!query.trim()) {
     return [];
   }
-
   try {
     const results = await searchEmbeddings(query);
     return results;

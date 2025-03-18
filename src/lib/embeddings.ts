@@ -6,7 +6,7 @@ const openai = new OpenAI({
 });
 
 const pinecone = new Pinecone({
-  apiKey: process.env.PINECONE_API_KEY,
+  apiKey: process.env.PINECONE_API_KEY!,
 });
 
 export async function generateEmbedding(text: string) {
@@ -36,19 +36,20 @@ export async function storeEmbedding(
   ]);
 }
 
-export async function searchEmbeddings(query: string, topK = 3) {
+export async function searchEmbeddings(
+  query: string,
+  topK = 3,
+): Promise<{ id: string; text: string; score: number }[]> {
   const queryEmbedding = await generateEmbedding(query);
   const index = pinecone.Index(process.env.PINECONE_INDEX!);
-
   const results = await index.query({
     vector: queryEmbedding,
     topK,
     includeMetadata: true,
   });
-
   return results.matches.map((match) => ({
     id: match.id,
-    score: match.score,
-    text: match.metadata?.text || "",
+    score: match.score ?? 0, // Default to 0 if undefined
+    text: typeof match.metadata?.text === "string" ? match.metadata.text : "", // Ensure text is a string
   }));
 }
