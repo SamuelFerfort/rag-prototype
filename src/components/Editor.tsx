@@ -4,14 +4,16 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import { useState } from "react";
-import { searchDocuments, addDocument } from "@/lib/actions/search";
+import {
+  searchDocuments,
+  addDocument,
+  type SearchResult,
+} from "@/lib/actions/search";
 
 export default function Editor() {
   const [query, setQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const [searchResults, setSearchResults] = useState<
-    { id: string; text: string; score: number }[]
-  >([]);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [status, setStatus] = useState("");
 
   const editor = useEditor({
@@ -32,10 +34,14 @@ export default function Editor() {
     try {
       const results = await searchDocuments(query);
       setSearchResults(results);
-      setStatus(results.length > 0 ? "Found results!" : "No results found");
-    } catch (error) {
+      setStatus(
+        results.length > 0
+          ? `Found ${results.length} results`
+          : "No results found",
+      );
+    } catch (error: any) {
       console.error(error);
-      setStatus("Error searching documents");
+      setStatus(`Error: ${error?.message || "Unknown error"}`);
     } finally {
       setIsSearching(false);
     }
@@ -43,7 +49,6 @@ export default function Editor() {
 
   function insertText(text: string) {
     if (!editor) return;
-
     editor.chain().focus().insertContent(text).run();
   }
 
@@ -54,44 +59,69 @@ export default function Editor() {
     try {
       await addDocument(editor.getText());
       setStatus("Document saved and indexed!");
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      setStatus("Error saving document");
+      setStatus(`Error: ${error?.message || "Unknown error"}`);
     }
   }
 
-  return (
-    <div className="max-w-4xl mx-auto p-4">
-      <div className="mb-8 border p-4 rounded-md">
-        <h2 className="text-lg font-semibold mb-2">Editor</h2>
-        <div className="border rounded-md p-2 mb-4 min-h-60">
-          <EditorContent editor={editor} />
-        </div>
-        <button
-          onClick={saveCurrentDocument}
-          className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
-        >
-          Save & Index Document
-        </button>
-        <p className="text-sm mt-2 text-gray-500">
-          Save the current text as a document so it can be searched later
-        </p>
-      </div>
+  // Simple highlight function
+  function formatPreview(text: string, maxLength = 200) {
+    if (!text) return "";
 
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold mb-2">Search</h2>
+    // Truncate text if needed
+    let preview =
+      text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
+
+    // Highlight query terms
+    if (query) {
+      const terms = query.split(" ").filter((t) => t.length > 2);
+      terms.forEach((term) => {
+        const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const regex = new RegExp(`(${escapedTerm})`, "gi");
+        preview = preview.replace(
+          regex,
+          '<span style="background-color: #ffd700; color: #000000;">$1</span>',
+        );
+      });
+    }
+
+    return preview;
+  }
+
+  return (
+    <div className="mb-8 border border-gray-700 p-4 rounded-md bg-gray-800">
+      <h2 className="text-xl font-semibold mb-4">Editor</h2>
+      <div className="border border-gray-600 rounded-md p-2 mb-4 min-h-60 bg-gray-900">
+        <EditorContent editor={editor} />
+      </div>
+      <button
+        onClick={saveCurrentDocument}
+        className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+      >
+        Save & Index Document
+      </button>
+      <p className="text-sm mt-2 text-gray-400">
+        Save the current text as a document so it can be searched later
+      </p>
+
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold mb-4">Search</h2>
         <div className="flex gap-2 mb-4">
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Enter your search query"
-            className="flex-1 border p-2 rounded-md"
+            className="flex-1 border border-gray-600 p-2 rounded-md bg-gray-900 text-white"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleSearch();
+            }}
           />
           <button
             onClick={handleSearch}
             disabled={isSearching}
-            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 disabled:bg-blue-300"
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:bg-blue-800"
           >
             Search
           </button>
@@ -100,21 +130,30 @@ export default function Editor() {
         {status && <p className="mb-4 text-sm">{status}</p>}
 
         {searchResults.length > 0 && (
-          <div className="border rounded-md p-4">
+          <div className="border border-gray-700 rounded-md p-4">
             <h3 className="font-medium mb-2">Search Results</h3>
-            <ul className="space-y-2">
-              {searchResults.map((result) => (
-                <li key={result.id} className="border-b pb-2">
-                  <p className="mb-1 text-sm">
-                    {result.text.substring(0, 100)}...
-                  </p>
+            <ul className="space-y-3">
+              {searchResults.map((result, idx) => (
+                <li
+                  key={result.id || idx}
+                  className="border-b border-gray-700 pb-3"
+                >
+                  <div
+                    className="mb-2 text-sm"
+                    dangerouslySetInnerHTML={{
+                      __html: formatPreview(result.text),
+                    }}
+                  />
+
                   <div className="flex justify-between">
-                    <span className="text-xs text-gray-500">
-                      Score: {Math.round(result.score * 100)}%
+                    <span className="text-xs text-gray-400">
+                      Score: {(result.score * 100).toFixed(1)}%
+                      {result.metadata?.filename &&
+                        ` • Source: ${result.metadata.filename}`}
                     </span>
                     <button
                       onClick={() => insertText(result.text)}
-                      className="text-xs text-blue-500"
+                      className="text-xs bg-blue-600 px-2 py-1 rounded text-white"
                     >
                       Insert
                     </button>

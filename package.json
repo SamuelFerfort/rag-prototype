@@ -9,12 +9,17 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@langchain/openai": "^0.4.5",
+    "@langchain/pinecone": "^0.2.0",
     "@pinecone-database/pinecone": "^5.1.1",
     "@tiptap/extension-placeholder": "^2.11.5",
     "@tiptap/react": "^2.11.5",
     "@tiptap/starter-kit": "^2.11.5",
+    "langchain": "^0.3.19",
+    "mammoth": "^1.9.0",
     "next": "15.2.3",
     "openai": "^4.87.3",
+    "pdf-parse": "^1.1.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
@@ -22,6 +27,7 @@
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pdf-parse": "^1.1.4",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
