@@ -24,6 +24,7 @@ export default function Editor() {
       }),
     ],
     content: "<p></p>",
+    immediatelyRender: false,
   });
 
   async function handleSearch() {
@@ -37,7 +38,7 @@ export default function Editor() {
       setStatus(
         results.length > 0
           ? `Found ${results.length} results`
-          : "No results found",
+          : "No results found"
       );
     } catch (error: any) {
       console.error(error);
@@ -81,7 +82,7 @@ export default function Editor() {
         const regex = new RegExp(`(${escapedTerm})`, "gi");
         preview = preview.replace(
           regex,
-          '<span style="background-color: #ffd700; color: #000000;">$1</span>',
+          '<span style="background-color: #ffd700; color: #000000;">$1</span>'
         );
       });
     }
