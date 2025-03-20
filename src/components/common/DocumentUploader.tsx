@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { uploadDocument } from "@/lib/actions/documents";
+import { storeProcessedDocument } from "@/lib/actions/storage";
+
+// This is the URL of your Fly.io backend
+const BACKEND_URL = process.env.NEXT_PUBLIC_DOCUMENT_PROCESSOR_URL;
 
 export default function DocumentUploader() {
   const [file, setFile] = useState<File | null>(null);
@@ -38,37 +41,63 @@ export default function DocumentUploader() {
     if (!file) return;
 
     setIsUploading(true);
-    setUploadStatus("Reading file...");
+    setUploadStatus("Preparing file for upload...");
     setUploadProgress(10);
 
     try {
-      // Read file content based on file type
-      const fileContent = await readFile(file);
+      // Generate document ID
+      const timestamp = Date.now();
+      const cleanFilename = file.name.replace(/\W+/g, "_").toLowerCase();
+      const docId = `doc_${cleanFilename}_${timestamp}`;
+
+      // Create FormData
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("project_id", docId);
+
+      // Add metadata
+      const metadata = {
+        project_id: docId,
+        filename: file.name,
+        type: getFileType(file),
+        timestamp: new Date().toISOString(),
+      };
+      formData.append("metadata", JSON.stringify(metadata));
+      formData.append("strategy", "fast");
+
+      setUploadStatus("Uploading to processing server...");
       setUploadProgress(30);
-      setUploadStatus(`Processing ${getFileTypeLabel(file)} with LangChain...`);
 
-      // Set up progress updates
-      const progressInterval = setInterval(() => {
-        setUploadProgress((prev) => {
-          if (prev < 85) return prev + 5;
-          return prev;
-        });
-      }, 1000);
+      // Upload directly to the backend
+      const response = await fetch(`${BACKEND_URL}/process`, {
+        method: "POST",
+        body: formData,
+      });
 
-      // Upload document
-      const result = await uploadDocument(
-        file.name,
-        fileContent,
-        getFileType(file)
-      );
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
+      }
 
-      clearInterval(progressInterval);
+      setUploadProgress(80);
+      setUploadStatus("Processing document...");
+
+      // Get the processed chunks and embeddings
+      const result = await response.json();
+
+      // Now store the chunks and embeddings in Pinecone using a server action
+      setUploadStatus("Storing in vector database...");
+      const storageResult = await storeProcessedDocument({
+        docId,
+        filename: file.name,
+        chunks: result.chunks,
+        embeddings: result.embeddings,
+      });
+
       setUploadProgress(100);
       setUploadStatus(
-        `Success! Processed "${result.filename}" into ${result.chunkCount} chunks`
+        `Success! Processed "${file.name}" into ${result.count} chunks`
       );
     } catch (error) {
-      // We're allowing `any` here to avoid TypeScript errors
       console.error("Upload error:", error);
       setUploadStatus(
         `Error: ${
@@ -97,87 +126,6 @@ export default function DocumentUploader() {
     return "txt"; // Default to text
   };
 
-  const getFileTypeLabel = (file: File): string => {
-    const type = getFileType(file);
-    switch (type) {
-      case "pdf":
-        return "PDF";
-      case "docx":
-        return "Word document";
-      case "md":
-        return "Markdown";
-      default:
-        return "text file";
-    }
-  };
-
-  const readFile = async (file: File): Promise<string> => {
-    const fileType = getFileType(file);
-
-    // For text-based files, use the simple text reader
-    if (fileType === "txt" || fileType === "md") {
-      return readFileAsText(file);
-    }
-
-    // For binary files, we need to use ArrayBuffer and process accordingly
-    const buffer = await readFileAsArrayBuffer(file);
-
-    // Convert ArrayBuffer to appropriate format based on file type
-    if (fileType === "pdf") {
-      // Client-side PDF parsing is handled in the server action
-      // Just return a placeholder here and send the raw buffer
-      return JSON.stringify({
-        type: "pdf",
-        name: file.name,
-        size: file.size,
-        buffer: Array.from(new Uint8Array(buffer)),
-      });
-    }
-
-    if (fileType === "docx") {
-      // Client-side DOCX parsing is handled in the server action
-      // Just return a placeholder here and send the raw buffer
-      return JSON.stringify({
-        type: "docx",
-        name: file.name,
-        size: file.size,
-        buffer: Array.from(new Uint8Array(buffer)),
-      });
-    }
-
-    throw new Error(`Unsupported file type: ${fileType}`);
-  };
-
-  const readFileAsText = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        if (e.target?.result) {
-          resolve(e.target.result as string);
-        } else {
-          reject(new Error("Failed to read file content"));
-        }
-      };
-      reader.onerror = () => reject(new Error("File reading error"));
-      reader.readAsText(file);
-    });
-  };
-
-  const readFileAsArrayBuffer = (file: File): Promise<ArrayBuffer> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        if (e.target?.result) {
-          resolve(e.target.result as ArrayBuffer);
-        } else {
-          reject(new Error("Failed to read file content"));
-        }
-      };
-      reader.onerror = () => reject(new Error("File reading error"));
-      reader.readAsArrayBuffer(file);
-    });
-  };
-
   // List of supported file types for the input element
   const supportedFileTypes = ".txt,.md,.pdf,.docx";
 
@@ -203,7 +151,7 @@ export default function DocumentUploader() {
           <div>
             <p className="font-medium">{file.name}</p>
             <p className="text-sm text-gray-400">
-              {(file.size / 1024).toFixed(1)} KB • {getFileTypeLabel(file)}
+              {(file.size / 1024).toFixed(1)} KB • {getFileType(file)}
             </p>
           </div>
         ) : (
