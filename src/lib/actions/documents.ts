@@ -1,21 +1,25 @@
 "use server";
 
-import { processDocument, processDocumentBuffer } from "../services/langchain";
+import { pinecone } from "../services/pinecone";
+import { OpenAIEmbeddings } from "@langchain/openai";
+import type { Chunk, ChunkMetadata, Embedding } from "../types/embeddings";
+import { storeInPinecone } from "./search";
 
-type BinaryFilePayload = {
-  type: string;
-  name: string;
-  size: number;
-  buffer: number[];
-};
+// Initialize OpenAI embeddings for storing to Pinecone
+const embeddings = new OpenAIEmbeddings({
+  openAIApiKey: process.env.OPENAI_API_KEY,
+  modelName: "text-embedding-3-small",
+});
+
+const API_URL = process.env.DOCUMENT_PROCESSOR_URL;
 
 /**
- * Upload and process a document
+ * Upload and process a document using the external API
  */
 export async function uploadDocument(
   filename: string,
   content: string,
-  fileType: string = "txt",
+  fileType: string = "txt"
 ) {
   try {
     // Generate document ID
@@ -23,57 +27,96 @@ export async function uploadDocument(
     const cleanFilename = filename.replace(/\W+/g, "_").toLowerCase();
     const docId = `doc_${cleanFilename}_${timestamp}`;
 
-    // Determine if this is a binary file payload
-    const isBinaryPayload =
-      fileType === "pdf" || fileType === "docx" || fileType === "pptx";
+    // Prepare metadata
+    const metadata = {
+      project_id: docId,
+      filename: filename,
+      type: fileType,
+      timestamp: new Date().toISOString(),
+    };
 
-    if (isBinaryPayload) {
-      // Parse the JSON payload for binary files
-      let payload: BinaryFilePayload;
-      try {
-        payload = JSON.parse(content) as BinaryFilePayload;
-      } catch (e) {
-        throw new Error("Invalid binary file payload");
+    // For text-based files
+    if (fileType === "txt" || fileType === "md") {
+      // Create FormData and directly upload the text content
+      const formData = new FormData();
+      const textBlob = new Blob([content], { type: "text/plain" });
+      const textFile = new File([textBlob], filename, { type: "text/plain" });
+
+      formData.append("file", textFile);
+      formData.append("project_id", docId);
+      formData.append("metadata", JSON.stringify(metadata));
+      formData.append("strategy", "fast");
+
+      // Call the external API
+      const response = await fetch(`${API_URL}/process`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
       }
 
-      // Convert array back to buffer
-      const buffer = new Uint8Array(payload.buffer).buffer;
+      const result = await response.json();
 
-      // Process with Unstructured
-      const result = await processDocumentBuffer(buffer, {
-        id: docId,
-        filename,
-        type: fileType,
-        timestamp: new Date().toISOString(),
-      });
+      // Store in Pinecone
+      await storeInPinecone(result.chunks, result.embeddings);
 
       return {
         id: docId,
         filename,
-        chunkCount: result.chunkCount,
+        chunkCount: result.count,
+        timestamp,
+      };
+    }
+    // For binary files (PDF, DOCX)
+    else if (fileType === "pdf" || fileType === "docx") {
+      // Parse the JSON content for binary files
+      let payload;
+      try {
+        payload = JSON.parse(content);
+      } catch (e) {
+        throw new Error("Invalid binary file payload");
+      }
+
+      // Convert array back to buffer and create a file
+      const buffer = new Uint8Array(payload.buffer);
+      const fileBlob = new Blob([buffer], { type: `application/${fileType}` });
+      const file = new File([fileBlob], filename, {
+        type: `application/${fileType}`,
+      });
+
+      // Create FormData
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("project_id", docId);
+      formData.append("metadata", JSON.stringify(metadata));
+      formData.append("strategy", "fast");
+
+      // Call the external API
+      const response = await fetch(`${API_URL}/process`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      // Store in Pinecone
+      await storeInPinecone(result.chunks, result.embeddings);
+
+      return {
+        id: docId,
+        filename,
+        chunkCount: result.count,
         timestamp,
       };
     }
 
-    // Handle text files
-    if (!content || content.trim().length === 0) {
-      throw new Error("Document content cannot be empty");
-    }
-
-    // Process text document using LangChain
-    const result = await processDocument(content, {
-      id: docId,
-      filename,
-      type: fileType,
-      timestamp: new Date().toISOString(),
-    });
-
-    return {
-      id: docId,
-      filename,
-      chunkCount: result.chunkCount,
-      timestamp,
-    };
+    throw new Error(`Unsupported file type: ${fileType}`);
   } catch (error: unknown) {
     console.error("Document upload error:", error);
     throw error instanceof Error

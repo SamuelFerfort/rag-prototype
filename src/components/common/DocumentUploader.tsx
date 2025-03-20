@@ -59,19 +59,21 @@ export default function DocumentUploader() {
       const result = await uploadDocument(
         file.name,
         fileContent,
-        getFileType(file),
+        getFileType(file)
       );
 
       clearInterval(progressInterval);
       setUploadProgress(100);
       setUploadStatus(
-        `Success! Processed "${result.filename}" into ${result.chunkCount} chunks`,
+        `Success! Processed "${result.filename}" into ${result.chunkCount} chunks`
       );
     } catch (error) {
       // We're allowing `any` here to avoid TypeScript errors
       console.error("Upload error:", error);
       setUploadStatus(
-        `Error: ${error instanceof Error ? error.message : "Problem uploading document"}`,
+        `Error: ${
+          error instanceof Error ? error.message : "Problem uploading document"
+        }`
       );
       setUploadProgress(0);
     } finally {
