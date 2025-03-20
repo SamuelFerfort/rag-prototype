@@ -1,9 +1,5 @@
 import Editor from "../components/common/Editor";
 import DocumentUploader from "../components/common/DocumentUploader";
-import SignOut from "@/components/auth/sign-out";
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 
 export default async function Home() {
   return (

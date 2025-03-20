@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { storeProcessedDocument } from "@/lib/actions/storage";
-
+import { getFileType } from "@/lib/utils";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_DOCUMENT_PROCESSOR_URL;
 
@@ -115,7 +115,7 @@ export default function DocumentUploader() {
 
       setUploadProgress(100);
       setUploadStatus(
-        `Success! Processed "${file.name}" into ${result.count} chunks`
+        `Success! Processed "${file.name}" into ${result.count} chunks`,
       );
       setIsSuccess(true);
 
@@ -128,7 +128,7 @@ export default function DocumentUploader() {
       setUploadStatus(
         `Error: ${
           error instanceof Error ? error.message : "Problem uploading document"
-        }`
+        }`,
       );
       setUploadProgress(0);
       setIsError(true);
@@ -137,24 +137,8 @@ export default function DocumentUploader() {
     }
   };
 
-  const getFileType = (file: File): string => {
-    const extension = file.name.split(".").pop()?.toLowerCase() || "";
-
-    if (file.type.includes("pdf") || extension === "pdf") return "pdf";
-    if (
-      file.type.includes("word") ||
-      extension === "docx" ||
-      extension === "doc"
-    )
-      return "docx";
-    if (file.type.includes("text") || extension === "txt") return "txt";
-    if (extension === "md") return "md";
-
-    return "txt"; // Default to text
-  };
-
   // List of supported file types for the input element
-  const supportedFileTypes = ".txt,.md,.pdf,.docx";
+  const supportedFileTypes = ".txt,.pdf,.docx";
 
   return (
     <div className="border border-gray-700 p-4 rounded-md mb-8 bg-gray-800">

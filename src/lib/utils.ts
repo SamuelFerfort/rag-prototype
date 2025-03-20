@@ -1,8 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { pinecone } from "./services/pinecone";
-import { Embedding } from "./types/embeddings";
-import { Chunk } from "./types/embeddings";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -21,3 +18,15 @@ export function sanitizeId(id: string): string {
     .replace(/[^a-zA-Z0-9_-]/g, "") // Remove any other special characters
     .substring(0, 512); // Ensure it's not too long
 }
+
+export const getFileType = (file: File): string => {
+  const extension = file.name.split(".").pop()?.toLowerCase() || "";
+
+  if (file.type.includes("pdf") || extension === "pdf") return "pdf";
+  if (file.type.includes("word") || extension === "docx" || extension === "doc")
+    return "docx";
+  if (file.type.includes("text") || extension === "txt") return "txt";
+  if (extension === "md") return "md";
+
+  return "txt"; // Default to text
+};
