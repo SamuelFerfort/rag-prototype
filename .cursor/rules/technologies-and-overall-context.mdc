@@ -1,0 +1,102 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Sequoia Pro RAG Project Management App
+
+## Project Overview
+I'm building "Sequoia Pro" - a project management application with RAG (Retrieval-Augmented Generation) capabilities for environmental consultancies. The app manages projects, clients, documents and "memories" (rich text notes) with an AI assistant that can search across documents and memories to help draft new content.
+
+## Technical Architecture
+
+### Core Technologies
+- **Framework**: Next.js 15 with App Router with React 19
+- **Database**: PostgreSQL with Prisma ORM hosted on Neon
+- **Vector Search**: Pinecone for document/memory embeddings
+- **Authentication**: better-auth for user management
+- **UI**: Shadcn UI components with TailwindCSS
+- **Rich Text**: TipTap editor with AI integration
+- **API**: OpenAI for embeddings and AI features Python backend to process and parse documents and generate embeddings, then given to this nextjs app and we store it in pinecone
+
+### Design Principles
+1. **Server Components for Data Fetching**: 
+   - All data fetching happens in server components in src/lib/db you have various prisma crud operations utilities use them for fetching
+   - Direct Prisma queries in page components for initial render
+
+2. **Server Actions for Mutations**:
+   - All mutations (create/update/delete) in server actions
+   - Proper error handling and type safety
+   - Path revalidation after operations
+
+3. **Repository Pattern**:
+   - Database logic in repository modules
+   - Clean separation of concerns
+
+4. **Route Groups**:
+   - `(auth)` route group for login/signup (no navigation)
+   - `(dashboard)` route group for authenticated pages (with AppLayout)
+   - Shared root layout for fonts and global styles
+
+5. **RAG Context Awareness**:
+   - Memories and documents stored with metadata (project/category)
+   - Search filtered by project/category context
+   - Rich text editor integrated with vector search
+
+## Database Schema
+The Prisma schema includes:
+- `User`: Authentication and user profile
+- `Project`: Main project with embedded client data
+- `ProjectCategory`: Categories for project classification
+- `Memory`: Rich text notes linked to projects
+- `Document`: Uploaded files (stored externally, metadata in DB)
+- Vector embeddings stored in Pinecone with project/category metadata
+
+## UI Components
+- All UI built with shadcn components (extracted and in `/components/ui/`)
+- Responsive layouts with mobile navigation
+- TipTap editor integration with custom AI toolbar
+
+## Current Implementation
+- Authentication with better-auth
+- Project listing and details pages
+- Memory editor with AI integration
+- Document uploading/listing
+- Repository pattern for DB access
+- Server actions for mutations
+- Vector search integration
+
+## Implementation Guidelines
+1. **Data Fetching**: 
+   ```typescript
+   // In server component (page.tsx)
+   const projects = await projectRepository.findAll();
+   ```
+
+2. **Mutations**: 
+   ```typescript
+   // Server action (actions/projects.ts)
+   "use server";
+   export async function createProject(data) {
+     try {
+       const project = await projectRepository.create(data);
+       revalidatePath("/projects");
+       return { success: true, data: project };
+     } catch (error) {
+       return handleError(error);
+     }
+   }
+   ```
+
+3. **UI Components**:
+   - Use shadcn components throughout
+   - Follow established design patterns from current components
+   - Maintain responsive design with mobile considerations
+
+4. **Vector Search**:
+   - Store relevant metadata with embeddings
+   - Filter searches by project/category context
+   - Connect to TipTap editor for AI integration
+
+---
+

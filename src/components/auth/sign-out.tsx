@@ -8,6 +8,7 @@ const SignOut = () => {
   const router = useRouter();
   return (
     <Button
+      className="cursor-pointer"
       onClick={async () => {
         await signOut({
           fetchOptions: {
