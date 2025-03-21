@@ -19,6 +19,7 @@ export function sanitizeId(id: string): string {
     .substring(0, 512); // Ensure it's not too long
 }
 
+
 export const getFileType = (file: File): string => {
   const extension = file.name.split(".").pop()?.toLowerCase() || "";
 
@@ -30,3 +31,18 @@ export const getFileType = (file: File): string => {
 
   return "txt"; // Default to text
 };
+
+
+
+export function handleError(error: unknown, defaultMessage: string) {
+  console.error(error);
+  
+  const errorMessage = error instanceof Error 
+    ? error.message 
+    : defaultMessage;
+  
+  return {
+    success: false,
+    error: errorMessage
+  };
+}

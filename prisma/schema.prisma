@@ -23,6 +23,7 @@ model User {
   updatedAt     DateTime
   sessions      Session[]
   accounts      Account[]
+  projects      ProjectUser[]
 
   @@unique([email])
   @@map("user")
@@ -71,4 +72,92 @@ model Verification {
   updatedAt  DateTime?
 
   @@map("verification")
+}
+
+// Project management models
+model Project {
+  id              String        @id @default(cuid())
+  name            String
+  description     String?
+  status          ProjectStatus @default(ACTIVO)
+  
+  // Client info embedded directly
+  clientName      String
+  clientLocation  String?
+  clientType      ClientType
+  clientDescription String?
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relations
+  category        ProjectCategory @relation(fields: [categoryId], references: [id])
+  categoryId      String
+  users           ProjectUser[]
+  documents       Document[]
+  memories        Memory[]
+}
+
+
+model ProjectCategory {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations
+  projects    Project[]
+}
+
+model ProjectUser {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  
+  @@unique([userId, projectId])
+}
+
+
+model Document {
+  id           String   @id @default(cuid())
+  name         String
+  path         String
+  mimeType     String
+  size         Int
+  vectorId     String?  // ID used in Pinecone to reference this document
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  // Relations
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId    String
+}
+
+model Memory {
+  id           String   @id @default(cuid())
+  name         String
+  content      String   @db.Text
+  vectorId     String?  // ID used in Pinecone to reference this memory
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  // Relations
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId    String
+}
+
+enum ProjectStatus {
+  ACTIVO
+  INACTIVO
+}
+
+enum ClientType {
+  PUBLICO
+  PRIVADO
 }
