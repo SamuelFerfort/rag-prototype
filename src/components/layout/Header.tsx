@@ -1,4 +1,5 @@
-// src/components/layout/Header.tsx
+"use client";
+
 import React from "react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -30,7 +31,7 @@ export function Header() {
             <path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z" />
             <path d="M3 9V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4" />
           </svg>
-          <span className="font-bold text-xl">
+          <span className="text-blackfont-bold text-xl">
             sequoia<span className="text-sm text-muted-foreground">pro</span>
           </span>
         </Link>
