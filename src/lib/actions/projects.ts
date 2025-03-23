@@ -2,29 +2,70 @@
 
 import { revalidatePath } from "next/cache";
 import { projectRepository } from "@/lib/db/projects";
-import { handleError } from "../utils";
+import { handleError, handleProjectError } from "../utils";
 import { CreateProjectData, UpdateProjectData } from "../types/projects";
 import { deleteEmbeddingsByFilter } from "../embeddings";
+import {
+  createProjectSchema,
+  ProjectFormState,
+} from "@/helpers/zod/projects-schema";
+import { getCurrentUserId } from "../session";
 
 // Create a new project
-export async function createProject(data: CreateProjectData) {
+export async function createProject(
+  prevState: ProjectFormState,
+  formData: FormData
+): Promise<ProjectFormState> {
+  // This function already redirects if we don't have a user
+  const userId = await getCurrentUserId();
+
+  const name = formData.get("name") as String;
+
+  const categoryId = formData.get("categoryId") as String;
+
+  const userIds = formData.getAll("userIds").map((id) => id.toString());
+  userIds.push(userId);
+
   try {
+    console.log("formData", formData);
+    const rawData = {
+      name,
+      categoryId,
+      userIds,
+    };
+
+    console.log("rawData", rawData);
+
+    const validationResult = createProjectSchema.safeParse(rawData);
+
+    if (!validationResult.success) {
+      return {
+        status: "error",
+        errors: validationResult.error.flatten().fieldErrors,
+        message: "Por favor corrige los errores en el formulario",
+      };
+    }
+
+    console.log("validationResult", validationResult);
+    const data = validationResult.data;
     const project = await projectRepository.create(data);
 
     // Revalidate relevant paths
     revalidatePath("/projects");
 
     return {
-      success: true,
+      status: "success",
       data: project,
+      message: "Proyecto creado exitosamente",
     };
   } catch (error) {
-    return handleError(error, "Failed to create project");
+    return handleProjectError(error, "Failed to create project");
   }
 }
 
 // Update a project
 export async function updateProject(data: UpdateProjectData) {
+  // we are missing validation and authorization here
   try {
     const project = await projectRepository.update(data);
 
@@ -42,6 +83,7 @@ export async function updateProject(data: UpdateProjectData) {
 }
 
 export async function deleteProject(id: string) {
+  // we are missing validation and authorization here
   try {
     // First delete all vectors from Pinecone
     await deleteEmbeddingsByFilter({ projectId: id });

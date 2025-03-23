@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { ProjectFormState } from "@/helpers/zod/projects-schema";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -19,7 +20,6 @@ export function sanitizeId(id: string): string {
     .substring(0, 512); // Ensure it's not too long
 }
 
-
 export const getFileType = (file: File): string => {
   const extension = file.name.split(".").pop()?.toLowerCase() || "";
 
@@ -32,17 +32,27 @@ export const getFileType = (file: File): string => {
   return "txt"; // Default to text
 };
 
-
-
 export function handleError(error: unknown, defaultMessage: string) {
   console.error(error);
-  
-  const errorMessage = error instanceof Error 
-    ? error.message 
-    : defaultMessage;
-  
+
+  const errorMessage = error instanceof Error ? error.message : defaultMessage;
+
   return {
     success: false,
-    error: errorMessage
+    error: errorMessage,
+  };
+}
+
+export function handleProjectError(
+  error: unknown,
+  defaultMessage: string
+): ProjectFormState {
+  console.error(error);
+  const errorMessage = error instanceof Error ? error.message : defaultMessage;
+
+  return {
+    status: "error",
+    message: errorMessage,
+    errors: {},
   };
 }

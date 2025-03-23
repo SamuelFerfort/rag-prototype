@@ -82,9 +82,9 @@ model Project {
   status          ProjectStatus @default(ACTIVO)
   
   // Client info embedded directly
-  clientName      String
+  clientName      String?
   clientLocation  String?
-  clientType      ClientType
+  clientType      ClientType @default(PRIVADO)
   clientDescription String?
   
   createdAt       DateTime      @default(now())
