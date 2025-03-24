@@ -19,9 +19,9 @@ export type CreateProjectData = {
   name: string;
   description?: string;
   categoryId: string;
-  clientName: string;
+  clientName?: string;
   clientLocation?: string;
-  clientType: ClientType;
+  clientType?: ClientType;
   clientDescription?: string;
   status?: ProjectStatus;
   userIds: string[];

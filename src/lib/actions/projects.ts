@@ -20,9 +20,7 @@ export async function createProject(
   const userId = await getCurrentUserId();
 
   const name = formData.get("name") as String;
-
   const categoryId = formData.get("categoryId") as String;
-
   const userIds = formData.getAll("userIds").map((id) => id.toString());
   userIds.push(userId);
 
