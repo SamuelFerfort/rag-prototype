@@ -29,7 +29,7 @@ export const memoryRepository = {
     });
   },
 
-  // Find a single memory by ID
+  // Find a single memory by ID include project and category for context
   findById: async (id: string) => {
     return prisma.memory.findUnique({
       where: { id },

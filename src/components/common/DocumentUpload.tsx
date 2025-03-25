@@ -132,7 +132,7 @@ export function DocumentUploader({ projectId, onUploadComplete }: DocumentUpload
       });
       
       if (!result.success) {
-        throw new Error(result.error || "Failed to store document");
+        throw new Error("Failed to store document");
       }
       
       setProgress(100);

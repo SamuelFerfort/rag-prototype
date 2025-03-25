@@ -36,7 +36,7 @@ export function DeleteDocumentButton({ documentId, documentName }: DeleteDocumen
         toast.success(`Documento "${documentName}" eliminado`);
         router.refresh();
       } else {
-        toast.error(result.error || "Error al eliminar documento");
+        toast.error("Error al eliminar documento");
       }
     } catch (error) {
       console.error("Delete error:", error);
