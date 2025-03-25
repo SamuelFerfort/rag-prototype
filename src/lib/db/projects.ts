@@ -152,7 +152,41 @@ export const projectRepository = {
       return project;
     });
   },
-
+// Find a project with all its content (documents and memories)
+findProjectWithContent: async (id: string, userId?: string) => {
+  const whereClause: any = { id };
+  
+  // If userId is provided, ensure the user has access to this project
+  if (userId) {
+    whereClause.users = {
+      some: {
+        userId,
+      },
+    };
+  }
+  
+  return prisma.project.findFirst({
+    where: whereClause,
+    include: {
+      category: true,
+      users: {
+        include: {
+          user: true,
+        },
+      },
+      documents: {
+        orderBy: {
+          createdAt: 'desc',
+        },
+      },
+      memories: {
+        orderBy: {
+          createdAt: 'desc',
+        },
+      },
+    },
+  });
+},
   // Delete a project
   delete: async (id: string) => {
     return prisma.project.delete({
@@ -160,3 +194,4 @@ export const projectRepository = {
     });
   },
 };
+

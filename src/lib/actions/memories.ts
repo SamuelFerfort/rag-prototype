@@ -13,6 +13,15 @@ import {
 } from "@/lib/embeddings";
 import { sanitizeId } from "@/lib/utils";
 import { handleError } from "../utils";
+import { redirect } from "next/navigation";
+import { getCurrentUserId } from "../session";
+import { z } from "zod";
+
+
+
+
+
+
 // Create a memory with vector embedding
 export async function createMemory(data: CreateMemoryData) {
   try {
@@ -126,5 +135,80 @@ export async function deleteMemory(id: string) {
     return { success: true };
   } catch (error) {
     return handleError(error, "Failed to delete memory");
+  }
+}
+
+
+// Simple schema for memory creation
+const createMemorySchema = z.object({
+  name: z.string().min(1, "El nombre es requerido"),
+  projectId: z.string().min(1, "El proyecto es requerido"),
+});
+
+type MemoryFormState = {
+  status: string;
+  errors?: {
+    name?: string[];
+    projectId?: string[];
+    _form?: string[];
+  };
+  data?: any;
+  message?: string;
+};
+
+
+export async function createSimpleMemory(
+  prevState: MemoryFormState,
+  formData: FormData
+): Promise<MemoryFormState> {
+
+
+  const userId = await getCurrentUserId();  
+  if (!userId) {
+    redirect("/signin");
+  }
+
+  try {
+    const rawData = {
+      name: formData.get("name"),
+      projectId: formData.get("projectId"),
+    };
+
+    // Validate with Zod
+    const validationResult = createMemorySchema.safeParse(rawData);
+    
+    if (!validationResult.success) {
+      return {
+        status: "error",
+        errors: validationResult.error.flatten().fieldErrors,
+        message: "Por favor corrige los errores en el formulario",
+      };
+    }
+    
+    // Data is valid, create the memory
+    const data = validationResult.data;
+    const memory = await memoryRepository.createSimple({
+      name: data.name,
+      projectId: data.projectId,
+      content: "",
+    });
+    
+    // Revalidate relevant paths
+    revalidatePath(`/projects/${data.projectId}`);
+    
+    return {
+      status: "success",
+      data: memory,
+      message: "Memoria creada exitosamente",
+    };
+  } catch (error) {
+    console.error("Failed to create memory:", error);
+    return {
+      status: "error",
+      message: "Error al crear la memoria",
+      errors: {
+        _form: ["Error al crear la memoria"],
+      },
+    };
   }
 }

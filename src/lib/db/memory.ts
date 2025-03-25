@@ -61,7 +61,16 @@ export const memoryRepository = {
       },
     });
   },
-
+  createSimple: async (data: CreateMemoryData) => {
+    return prisma.memory.create({
+      data: {
+        name: data.name,
+        content: data.content || null,
+        projectId: data.projectId,
+        vectorId: data.vectorId || null,
+      },
+    });
+  },
   // Update a memory
   update: async (data: UpdateMemoryData) => {
     const { id, ...updateData } = data;

@@ -142,7 +142,7 @@ model Document {
 model Memory {
   id           String   @id @default(cuid())
   name         String
-  content      String   @db.Text
+  content      String?   @db.Text
   vectorId     String?  // ID used in Pinecone to reference this memory
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
