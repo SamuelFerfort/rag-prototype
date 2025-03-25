@@ -64,25 +64,25 @@ export function NewProjectDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto text-black">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto border border-zinc-200">
         <DialogHeader className="mb-4">
-          <DialogTitle className="text-xl font-semibold">
+          <DialogTitle className="text-xl font-semibold text-zinc-900">
             Nuevo Proyecto
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-zinc-500">
             Crea un nuevo proyecto y asigna usuarios.
           </DialogDescription>
         </DialogHeader>
 
         <form action={formAction}>
-          <Card>
+          <Card className="border border-zinc-200">
             <CardContent className="pt-6">
               <div className="grid gap-5">
                 <div>
                   <Label
                     htmlFor="name"
                     className={`block text-sm font-medium mb-1.5 ${
-                      state.errors?.name ? "text-destructive" : ""
+                      state.errors?.name ? "text-destructive" : "text-zinc-700"
                     }`}
                   >
                     Nombre *
@@ -91,7 +91,7 @@ export function NewProjectDialog({
                     id="name"
                     name="name"
                     placeholder="Nombre del proyecto"
-                    className={`w-full ${
+                    className={`w-full border-zinc-300 focus-visible:ring-zinc-900 ${
                       state.errors?.name ? "border-destructive" : ""
                     }`}
                   />
@@ -106,7 +106,7 @@ export function NewProjectDialog({
                   <Label
                     htmlFor="categoryId"
                     className={`block text-sm font-medium mb-1.5 ${
-                      state.errors?.categoryId ? "text-destructive" : ""
+                      state.errors?.categoryId ? "text-destructive" : "text-zinc-700"
                     }`}
                   >
                     Categoría *
@@ -116,13 +116,13 @@ export function NewProjectDialog({
                     defaultValue={state.data?.categoryId}
                   >
                     <SelectTrigger
-                      className={`w-full ${
+                      className={`w-full border-zinc-300 focus:ring-zinc-900 ${
                         state.errors?.categoryId ? "border-destructive" : ""
                       }`}
                     >
                       <SelectValue placeholder="Selecciona una categoría" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="border-zinc-200">
                       {categories.map((category) => (
                         <SelectItem key={category.id} value={category.id}>
                           {category.name}
@@ -141,14 +141,14 @@ export function NewProjectDialog({
                   <Label
                     htmlFor="userIds"
                     className={`block text-sm font-medium mb-1.5 ${
-                      state.errors?.userIds ? "text-destructive" : ""
+                      state.errors?.userIds ? "text-destructive" : "text-zinc-700"
                     }`}
                   >
                     Usuarios asignados * (aparte de ti)
                   </Label>
-                  <div className="border rounded-md p-3 max-h-40 overflow-y-auto">
+                  <div className="border border-zinc-300 rounded-md p-3 max-h-40 overflow-y-auto">
                     {users.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-2">
+                      <p className="text-sm text-zinc-500 text-center py-2">
                         No hay usuarios disponibles
                       </p>
                     ) : (
@@ -163,11 +163,11 @@ export function NewProjectDialog({
                               id={`user-${user.id}`}
                               name="userIds"
                               value={user.id}
-                              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                              className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900"
                             />
                             <label
                               htmlFor={`user-${user.id}`}
-                              className="text-sm"
+                              className="text-sm text-zinc-700"
                             >
                               {user.name}
                             </label>
@@ -192,12 +192,13 @@ export function NewProjectDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isPending}
+              className="border-zinc-300 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
-              className="bg-[#0f172a] hover:bg-[#1e293b]"
+              className="bg-zinc-900 hover:bg-zinc-800 text-white"
               disabled={isPending}
             >
               {isPending ? (

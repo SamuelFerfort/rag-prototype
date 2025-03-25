@@ -26,25 +26,26 @@ export default function ProjectList({
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="space-y-8 w-full">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-zinc-200 pb-5">
         <div>
-          <h1 className="text-3xl font-bold">Proyectos</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-3xl font-bold tracking-tight text-zinc-900">Proyectos</h1>
+          <p className="text-zinc-500 mt-1">
             Gestión de los proyectos y memorias
           </p>
         </div>
-        <div className="flex w-full md:w-auto gap-4">
+        <div className="flex w-full md:w-auto gap-3 mt-3 md:mt-0">
           <Input
             placeholder="Buscar"
-            className="w-full md:w-64"
+            className="w-full md:w-64 border-zinc-300 focus:border-zinc-900 focus:ring-zinc-900"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           <Button
             onClick={() => setOpen(true)}
-            className="bg-[#0f172a] hover:bg-[#1e293b]"
+            className="bg-zinc-900 hover:bg-zinc-800 text-white"
           >
+            <Plus className="h-4 w-4 mr-2" />
             Nuevo
           </Button>
         </div>
@@ -54,14 +55,6 @@ export default function ProjectList({
         {filteredProjects.map((project) => (
           <ProjectCard key={project.id} project={project} />
         ))}
-        <Button
-          variant="outline"
-          className="h-full min-h-[240px] flex flex-col items-center justify-center gap-2 border-dashed"
-          onClick={() => setOpen(true)}
-        >
-          <Plus className="h-10 w-10 text-muted-foreground" />
-          <span className="text-muted-foreground">Nuevo proyecto</span>
-        </Button>
       </div>
 
       <NewProjectDialog

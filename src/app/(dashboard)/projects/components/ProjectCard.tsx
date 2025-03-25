@@ -12,15 +12,15 @@ import { ProjectWithRelations } from "@/lib/types/projects";
 
 export function ProjectCard({ project }: { project: ProjectWithRelations }) {
   return (
-    <Card className="w-full">
-      <CardHeader className="pb-2 flex flex-row justify-between items-start">
+    <Card className="w-full border border-zinc-200 hover:border-zinc-300 transition-colors group">
+      <CardHeader className="pb-2 flex flex-row justify-between items-start space-y-0">
         <Link
           href={`/projects/${project.id}`}
-          className="font-bold text-lg hover:underline"
+          className="font-medium text-base text-zinc-900 hover:underline"
         >
           {project.name}
         </Link>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100">
           <MoreVertical className="h-4 w-4" />
         </Button>
       </CardHeader>
@@ -30,24 +30,24 @@ export function ProjectCard({ project }: { project: ProjectWithRelations }) {
             variant="outline"
             className={`${
               project.status === "ACTIVO"
-                ? "bg-green-100 text-green-800"
-                : "bg-gray-100 text-gray-800"
+                ? "bg-zinc-100 text-zinc-800 border-zinc-200"
+                : "bg-zinc-50 text-zinc-600 border-zinc-200"
             } rounded-full px-2 py-0.5 text-xs`}
           >
             {project.status === "ACTIVO" ? "Activo" : "Inactivo"}
           </Badge>
         </div>
       </CardContent>
-      <CardFooter className="flex flex-col items-start pt-0">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+      <CardFooter className="flex flex-col items-start pt-0 space-y-2">
+        <div className="flex items-center gap-2 text-sm text-zinc-600">
           <User className="h-4 w-4" />
-          <span>{project.clientName}</span>
+          <span>{project.clientName || "Sin cliente asignado"}</span>
         </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+        <div className="flex items-center gap-2 text-sm text-zinc-600">
           <FolderOpen className="h-4 w-4" />
           <span>{project.category.name}</span>
         </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 text-sm text-zinc-600">
           <FileText className="h-4 w-4" />
           <span>{project._count?.memories ?? 0} Memorias</span>
         </div>

@@ -8,7 +8,7 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children }: AppLayoutProps) {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       {/* Header */}
       <Header />
 
@@ -18,7 +18,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       </div>
 
       {/* Main content */}
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 pt-16 px-4 sm:px-6 w-[95%] mx-auto">{children}</main>
 
       {/* Toaster for notifications */}
       <Toaster />
