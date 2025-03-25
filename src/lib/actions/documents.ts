@@ -9,6 +9,7 @@ import { storeInPinecone } from "./search";
 import { deleteEmbedding } from "@/lib/embeddings";
 import { Chunk } from "@/lib/types/embeddings";
 import { pinecone } from "../services/pinecone";
+import { del } from '@vercel/blob';
 
 // Types
 type UploadDocumentInput = {
@@ -81,19 +82,50 @@ export async function deleteDocument(id: string) {
       return { success: false, error: "Document not found" };
     }
 
+    // Delete the file from Vercel Blob
+    try {
+      // The document.path contains the Blob URL
+      if (document.path) {
+        await del(document.path);
+        console.log(`Deleted file from Blob storage: ${document.path}`);
+      }
+    } catch (blobError) {
+      console.error("Error deleting file from Blob storage:", blobError);
+      // Continue with deletion even if Blob deletion fails
+    }
+
     // Delete all embeddings from Pinecone with this document ID
     try {
       // Connect to Pinecone
-      const index = pinecone.Index(process.env.PINECONE_INDEX!);  
+      const index = pinecone.Index(process.env.PINECONE_INDEX!);
       
-      // Delete by metadata filter - all vectors with this documentId
-      await index.deleteMany({
-        filter: {
-          documentId: document.id
-        }
+      // 1. Create a dummy vector (just zeros) with the same dimension as your embeddings
+      const dummyVector = Array(1536).fill(0); // 1536 for text-embedding-3-small
+
+      // 2. Search with this dummy vector, but filter by your document ID
+      const queryResponse = await index.query({
+        vector: dummyVector,
+        filter: { documentId: document.id },
+        topK: 1000,
+        includeMetadata: false
       });
       
-      console.log(`Deleted embeddings for document ${document.id}`);
+      // 3. Get the IDs of matching vectors
+      const vectorIds = queryResponse.matches.map(match => match.id);
+      
+      if (vectorIds.length > 0) {
+        // 4. Delete those vectors using deleteMany
+        // Processing in batches to avoid request size limits
+        const batchSize = 100;
+        for (let i = 0; i < vectorIds.length; i += batchSize) {
+          const batch = vectorIds.slice(i, i + batchSize);
+          // for multiple IDs:
+          await index.deleteMany(batch);
+        }
+        console.log(`Deleted ${vectorIds.length} embeddings for document ${document.id}`);
+      } else {
+        console.log(`No embeddings found for document ${document.id}`);
+      }
     } catch (error) {
       console.error("Error deleting embeddings:", error);
       // Continue with document deletion even if embedding deletion fails

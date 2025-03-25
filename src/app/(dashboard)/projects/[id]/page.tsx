@@ -8,6 +8,7 @@ import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import { NewMemoryDialog } from "./components/NewMemoryDialog";
 import { DocumentUploader } from "@/components/common/DocumentUpload";
+import { DeleteDocumentButton } from "@/components/common/DeleteDocumentButton";
 
 export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
 
@@ -79,7 +80,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {project.documents?.map((document) => (
-            <Card key={document.id} className="h-full hover:shadow-md transition-shadow">
+            <Card key={document.id} className="h-full hover:shadow-md transition-shadow relative">
+              <DeleteDocumentButton documentId={document.id} documentName={document.name} />
+              
               <CardContent className="pt-6">
                 <h3 className="font-medium text-lg mb-2">{document.name}</h3>
                 <p className="text-muted-foreground text-sm">
