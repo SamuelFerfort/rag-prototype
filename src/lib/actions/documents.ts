@@ -8,6 +8,7 @@ import { sanitizeId } from "@/lib/utils";
 import { storeInPinecone } from "./search";
 import { deleteEmbedding } from "@/lib/embeddings";
 import { Chunk } from "@/lib/types/embeddings";
+import { pinecone } from "../services/pinecone";
 
 // Types
 type UploadDocumentInput = {
@@ -71,7 +72,7 @@ export async function uploadDocument(data: UploadDocumentInput) {
   }
 }
 
-// Delete a document
+// Delete a document and all its embeddings
 export async function deleteDocument(id: string) {
   try {
     const document = await documentRepository.findById(id);
@@ -80,10 +81,22 @@ export async function deleteDocument(id: string) {
       return { success: false, error: "Document not found" };
     }
 
-    // Delete from Pinecone if there's a vectorId
-    if (document.vectorId) {
-      await deleteEmbedding(document.vectorId);
-      // Note: For a full implementation, you'd need to fetch and delete all chunk IDs
+    // Delete all embeddings from Pinecone with this document ID
+    try {
+      // Connect to Pinecone
+      const index = pinecone.Index(process.env.PINECONE_INDEX!);  
+      
+      // Delete by metadata filter - all vectors with this documentId
+      await index.deleteMany({
+        filter: {
+          documentId: document.id
+        }
+      });
+      
+      console.log(`Deleted embeddings for document ${document.id}`);
+    } catch (error) {
+      console.error("Error deleting embeddings:", error);
+      // Continue with document deletion even if embedding deletion fails
     }
 
     // Delete from database

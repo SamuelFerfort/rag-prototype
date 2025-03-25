@@ -4,10 +4,11 @@ import { storeInPinecone } from "./search";
 import { Chunk, Embedding } from "../types/embeddings";
 
 interface ProcessedDocument {
-  docId: string;
+  documentId: string;
   filename: string;
   chunks: Chunk[];
   embeddings: Embedding[];
+  projectId: string;
 }
 
 /**
@@ -31,10 +32,11 @@ export async function storeProcessedDocument(document: ProcessedDocument) {
     // Return success with document info
     return {
       success: true,
-      id: document.docId,
+      id: document.documentId,
       filename: document.filename,
       chunkCount: document.chunks.length,
       timestamp: Date.now(),
+      projectId: document.projectId,
     };
   } catch (error) {
     console.error("Error storing document in Pinecone:", error);

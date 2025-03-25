@@ -7,13 +7,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import { NewMemoryDialog } from "./components/NewMemoryDialog";
-export default async function ProjectPage({ params }: { params: Promise<{ projectId: string }> }) {
+import { DocumentUploader } from "@/components/common/DocumentUpload";
 
-    const { projectId } = await params;
+export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
+
+    const { id } = await params;
     const userId = await getCurrentUserId();
 
-
-    const project = await projectRepository.findProjectWithContent( projectId, userId);
+    console.log("projectId", id);
+    const project = await projectRepository.findProjectWithContent( id);
 
     if (!project) {
         notFound();
@@ -67,6 +69,35 @@ export default async function ProjectPage({ params }: { params: Promise<{ projec
               <p className="text-muted-foreground">Nueva memoria</p>
             </div>
           </NewMemoryDialog>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold">Documentos</h2>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {project.documents?.map((document) => (
+            <Card key={document.id} className="h-full hover:shadow-md transition-shadow">
+              <CardContent className="pt-6">
+                <h3 className="font-medium text-lg mb-2">{document.name}</h3>
+                <p className="text-muted-foreground text-sm">
+                  {(document.size / (1024 * 1024)).toFixed(2)} MB
+                </p>
+              </CardContent>
+              <CardFooter className="text-xs text-muted-foreground">
+                <div className="flex items-center">
+                  <CalendarIcon className="h-3 w-3 mr-1" />
+                  {format(new Date(document.createdAt), 'dd/MM/yyyy HH:mm:ss')}
+                </div>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+        
+        <div className="mt-6">
+          <DocumentUploader projectId={project.id} />
         </div>
       </div>
     </div>

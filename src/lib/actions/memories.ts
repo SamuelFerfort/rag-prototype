@@ -164,10 +164,7 @@ export async function createSimpleMemory(
 
 
   const userId = await getCurrentUserId();  
-  if (!userId) {
-    redirect("/signin");
-  }
-
+  
   try {
     const rawData = {
       name: formData.get("name"),
@@ -187,6 +184,9 @@ export async function createSimpleMemory(
     
     // Data is valid, create the memory
     const data = validationResult.data;
+
+
+    console.log("data", data);
     const memory = await memoryRepository.createSimple({
       name: data.name,
       projectId: data.projectId,
