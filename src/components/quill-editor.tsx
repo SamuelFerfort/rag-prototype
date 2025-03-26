@@ -49,7 +49,7 @@ interface QuillEditorProps {
 export default function QuillEditor({
   content,
   onChange,
-  placeholder = "Start typing or paste your content here...",
+  placeholder = "Escribe o pega tu contenido aquí...",
 }: QuillEditorProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -70,7 +70,7 @@ export default function QuillEditor({
         modules={modules}
         formats={formats}
         placeholder={placeholder}
-        className="h-[250px]"
+        className="h-[650px]"
       />
     </div>
   );

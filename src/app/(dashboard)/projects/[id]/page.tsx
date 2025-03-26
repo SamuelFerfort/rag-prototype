@@ -10,26 +10,29 @@ import { NewMemoryDialog } from "./components/NewMemoryDialog";
 import { DocumentUploader } from "@/components/common/DocumentUpload";
 import { DeleteDocumentButton } from "@/components/common/DeleteDocumentButton";
 
-export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ProjectPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const userId = await getCurrentUserId();
 
-    const { id } = await params;
-    const userId = await getCurrentUserId();
+  console.log("projectId", id);
+  const project = await projectRepository.findProjectWithContent(id);
 
-    console.log("projectId", id);
-    const project = await projectRepository.findProjectWithContent( id);
+  if (!project) {
+    notFound();
+  }
 
-    if (!project) {
-        notFound();
-      }
-
-
-
-   return (
-    <div className="container py-6 space-y-6">
+  return (
+    <div className="container py-6 space-y-">
       <div className="flex justify-between items-center">
         <div>
           <Link href="/projects">
-            <Button variant="ghost" size="sm">← Volver</Button>
+            <Button variant="ghost" size="sm">
+              ← Volver
+            </Button>
           </Link>
           <h1 className="text-3xl font-bold">{project.name}</h1>
           <p className="text-muted-foreground">{project.description}</p>
@@ -44,20 +47,24 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {project.memories.map((memory) => (
-            <Link href={`/projects/${project.id}/memory/${memory.id}`} key={memory.id}>
+            <Link
+              href={`/projects/${project.id}/memory/${memory.id}`}
+              key={memory.id}
+            >
               <Card className="h-full hover:shadow-md transition-shadow">
                 <CardContent className="pt-6">
                   <h3 className="font-medium text-lg mb-2">{memory.name}</h3>
                   <p className="text-muted-foreground text-sm line-clamp-4">
-                    {memory.content 
-                      ? memory.content.replace(/<[^>]*>/g, '').slice(0, 100) + (memory.content.length > 100 ? '...' : '')
-                      : 'Sin contenido'}
+                    {memory.content
+                      ? memory.content.replace(/<[^>]*>/g, "").slice(0, 100) +
+                        (memory.content.length > 100 ? "..." : "")
+                      : "Sin contenido"}
                   </p>
                 </CardContent>
                 <CardFooter className="text-xs text-muted-foreground">
                   <div className="flex items-center">
                     <CalendarIcon className="h-3 w-3 mr-1" />
-                    {format(new Date(memory.createdAt), 'dd/MM/yyyy HH:mm:ss')}
+                    {format(new Date(memory.createdAt), "dd/MM/yyyy HH:mm:ss")}
                   </div>
                 </CardFooter>
               </Card>
@@ -77,12 +84,18 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold">Documentos</h2>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {project.documents?.map((document) => (
-            <Card key={document.id} className="h-full hover:shadow-md transition-shadow relative">
-              <DeleteDocumentButton documentId={document.id} documentName={document.name} />
-              
+            <Card
+              key={document.id}
+              className="h-full hover:shadow-md transition-shadow relative"
+            >
+              <DeleteDocumentButton
+                documentId={document.id}
+                documentName={document.name}
+              />
+
               <CardContent className="pt-6">
                 <h3 className="font-medium text-lg mb-2">{document.name}</h3>
                 <p className="text-muted-foreground text-sm">
@@ -92,13 +105,13 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
               <CardFooter className="text-xs text-muted-foreground">
                 <div className="flex items-center">
                   <CalendarIcon className="h-3 w-3 mr-1" />
-                  {format(new Date(document.createdAt), 'dd/MM/yyyy HH:mm:ss')}
+                  {format(new Date(document.createdAt), "dd/MM/yyyy HH:mm:ss")}
                 </div>
               </CardFooter>
             </Card>
           ))}
         </div>
-        
+
         <div className="mt-6">
           <DocumentUploader projectId={project.id} />
         </div>

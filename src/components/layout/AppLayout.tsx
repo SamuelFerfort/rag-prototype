@@ -18,7 +18,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
       </div>
 
       {/* Main content */}
-      <main className="flex-1 pt-16 px-4 sm:px-6 w-[95%] mx-auto">{children}</main>
+      <main className="flex-1 pt-16 px-4 sm:px-6 w-[95%] mx-auto min-h-screen">
+        {children}
+      </main>
 
       {/* Toaster for notifications */}
       <Toaster />
