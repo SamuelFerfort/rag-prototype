@@ -34,8 +34,6 @@ const formats = [
   "background",
   "align",
   "list",
-  "bullet",
-  "ordered",
   "indent",
   "link",
   "image",

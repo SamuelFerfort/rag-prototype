@@ -1,122 +1,90 @@
 "use server";
 
-import { searchEmbeddings } from "@/lib/embeddings";
-import { openai } from "@/lib/services/openai";
-import { getCurrentUserId } from "@/lib/session";
-import { projectRepository } from "@/lib/db/projects";
-import { handleError } from "@/lib/utils";
+import { openai } from "../services/openai";
+import { generateEmbeddings } from "../utils/content-processor";
+import { pinecone } from "../services/pinecone";
 
 interface AskAIParams {
   query: string;
   projectId: string;
   categoryId?: string;
-  maxResults?: number;
 }
 
-export async function askAI({
-  query,
-  projectId,
-  categoryId,
-  maxResults = 5
-}: AskAIParams) {
+export async function askAI({ query, projectId, categoryId }: AskAIParams) {
   try {
-    // Verify user authentication and project access
-    const userId = await getCurrentUserId();
-    const project = await projectRepository.findById(projectId);
-    
-    if (!project) {
-      return { success: false, error: "Project not found" };
-    }
-    
-    // Verify user has access to this project
-    const hasAccess = project.users.some(u => u.userId === userId);
-    if (!hasAccess) {
-      return { success: false, error: "You don't have access to this project" };
-    }
-    
-    // Define search filter - include category if provided
-    const filter: {
-      projectId: string;
-      categoryId?: string;
-    } = {
-      projectId
+    // 1. Generate embedding for the query
+    const [queryEmbedding] = await generateEmbeddings([query]);
+
+    // 2. Build filter for Pinecone query
+    const filter: any = {
+      projectId: { $eq: projectId },
     };
-    
+
+    // Add category filter if provided
     if (categoryId) {
-      filter.categoryId = categoryId;
+      filter.categoryId = { $eq: categoryId };
     }
-    
-    // Search for relevant content
-    const searchResults = await searchEmbeddings(query, filter, maxResults);
-    
-    if (searchResults.length === 0) {
+
+    // 3. Search in Pinecone
+    const index = pinecone.Index(process.env.PINECONE_INDEX!);
+    const searchResponse = await index.query({
+      vector: queryEmbedding,
+      filter: filter,
+      topK: 5,
+      includeMetadata: true,
+    });
+
+    // 4. Extract and format relevant chunks
+    const relevantChunks = searchResponse.matches
+      .filter((match) => match.metadata?.text)
+      .map((match) => match.metadata?.text as string);
+
+    if (relevantChunks.length === 0) {
       return {
-        success: true,
-        text: "No se encontró información relevante en el proyecto para responder a esta consulta. Por favor, proporciona más contexto o reformula tu pregunta.",
-        sources: []
+        success: false,
+        error: "No relevant information found",
       };
     }
-    
-    // Prepare context from search results
-    const context = searchResults
-      .map((result, index) => {
-        const source = result.metadata.filename 
-          ? `Documento: ${result.metadata.filename}` 
-          : result.metadata.type === "memory" 
-            ? "Memoria del proyecto" 
-            : "Documento";
-            
-        return `[${index + 1}] ${result.text}\n${source}`;
-      })
-      .join("\n\n");
-    
-    // Create prompt for OpenAI
-    const systemPrompt = `
-    Eres un asistente especializado en proyectos. Responde a la consulta del usuario basándote en el contexto proporcionado.
-    Si no puedes responder con la información disponible, indícalo claramente.
-    Sé conciso y relevante.
-    `;
-    
-    const userPrompt = `
-    CONTEXTO:
-    ${context}
-    
-    CONSULTA: ${query}
-    
-    INSTRUCCIONES:
-    1. Responde a la consulta utilizando solo la información proporcionada en el contexto.
-    2. Si la información en el contexto no es suficiente para responder, indícalo claramente.
-    3. Formato tu respuesta de manera clara y concisa.
-    `;
-    
-    // Call OpenAI API
+
+    console.log(relevantChunks);
+
+    console.log("Ha cogido:", relevantChunks.length);
+    // 5. Construct prompt with context
+    const prompt = `Based on the following context, please answer the question. 
+Context:
+${relevantChunks.join("\n\n")}
+
+Question: ${query}
+
+Please provide a clear and concise answer based on the context provided.`;
+
+    // 6. Get completion from GPT-4
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt }
+        {
+          role: "system",
+          content:
+            "You are a helpful assistant that provides accurate answers based on the given context. Format your responses in HTML using appropriate tags like <p>, <ul>, <li>, <strong>, <em>, etc. for better readability. Answer directly and concisely.",
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
       ],
-      temperature: 0.5,
-      max_tokens: 500
+      temperature: 0.7,
+      max_tokens: 500,
     });
-    
-    // Prepare response
+
     return {
       success: true,
-      text: completion.choices[0].message.content || "No se pudo generar una respuesta",
-      sources: searchResults.map(result => ({
-        text: result.text.substring(0, 150) + (result.text.length > 150 ? "..." : ""),
-        score: result.score,
-        metadata: {
-          type: result.metadata.type,
-          filename: result.metadata.filename,
-          categoryName: result.metadata.categoryName
-        }
-      }))
+      answer: completion.choices[0].message.content,
     };
-    
   } catch (error) {
-    console.error("Error in askAI:", error);
-    return handleError(error, "Failed to generate AI response");
+    console.error("AI query error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to process query",
+    };
   }
 }

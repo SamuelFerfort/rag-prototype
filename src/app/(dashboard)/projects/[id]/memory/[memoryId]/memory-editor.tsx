@@ -13,12 +13,14 @@ import {
 import { toast } from "sonner";
 import { updateMemory } from "@/lib/actions/memories";
 import { useRouter } from "next/navigation";
+import { AskAIInput } from "@/components/memory/AskAIInput";
 
 interface MemoryEditorProps {
   projectId: string;
   memoryId: string;
   initialTitle: string;
   initialContent: string;
+  categoryId: string;
 }
 
 export default function MemoryEditor({
@@ -26,12 +28,14 @@ export default function MemoryEditor({
   memoryId,
   initialTitle,
   initialContent,
+  categoryId,
 }: MemoryEditorProps) {
   const router = useRouter();
   const [title, setTitle] = useState(initialTitle);
   const [content, setContent] = useState(initialContent);
   const [isSaving, setIsSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const [showAIInput, setShowAIInput] = useState(false);
 
   const handleContentChange = (newContent: string) => {
     setContent(newContent);
@@ -58,7 +62,7 @@ export default function MemoryEditor({
       });
 
       if (!result.success) {
-        throw new Error(result.error || "Failed to save memory");
+        throw new Error("Failed to save memory");
       }
 
       setIsDirty(false);
@@ -70,6 +74,16 @@ export default function MemoryEditor({
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleAIResponse = (answer: string) => {
+    // Insert the AI response at the current cursor position or at the end
+    setContent((prevContent) => {
+      if (!prevContent) return answer;
+      return prevContent + "\n\n" + answer;
+    });
+    setIsDirty(true);
+    setShowAIInput(false);
   };
 
   return (
@@ -89,6 +103,24 @@ export default function MemoryEditor({
           onChange={handleContentChange}
           placeholder="Start typing or paste your content here..."
         />
+
+        {showAIInput ? (
+          <div className="mt-4">
+            <AskAIInput
+              projectId={projectId}
+              categoryId={categoryId}
+              onResponse={handleAIResponse}
+            />
+          </div>
+        ) : (
+          <Button
+            variant="outline"
+            onClick={() => setShowAIInput(true)}
+            className="mt-4"
+          >
+            Ask AI
+          </Button>
+        )}
       </CardContent>
 
       <CardFooter className="flex justify-between items-center">

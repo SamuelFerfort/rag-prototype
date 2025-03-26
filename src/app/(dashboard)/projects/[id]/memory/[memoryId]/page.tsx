@@ -5,17 +5,18 @@ export default async function MemoryPage({
 }: {
   params: Promise<{ id: string; memoryId: string }>;
 }) {
-  const { id, memoryId } = await params;
+  const { id: projectId, memoryId } = await params;
 
   const memory = await memoryRepository.findById(memoryId);
 
   return (
     <div className="max-w-4xl mx-auto py-6">
       <MemoryEditor
-        projectId={id}
+        projectId={projectId}
         memoryId={memoryId}
         initialTitle={memory?.name ?? ""}
         initialContent={memory?.content ?? ""}
+        categoryId={memory?.project.category.id ?? ""}
       />
     </div>
   );
