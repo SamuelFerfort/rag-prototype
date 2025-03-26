@@ -259,10 +259,6 @@ export default function RichTextEditor({
             pressed={editor.isActive("italic")}
             onPressedChange={() => editor.chain().focus().toggleItalic().run()}
             title="Italic (Ctrl+I)"
-            className={cn(
-              "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground",
-              "transition-colors duration-200 editor-shortcut-tooltip"
-            )}
             data-shortcut="Ctrl+I"
           >
             <Italic className="size-4" />

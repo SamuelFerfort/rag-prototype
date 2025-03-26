@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { projectRepository } from "@/lib/db/projects";
 import { handleError, handleProjectError } from "../utils";
 import { CreateProjectData, UpdateProjectData } from "../types/projects";
-import { deleteEmbeddingsByFilter } from "../embeddings";
+import { deleteVectorsByFilter } from "@/lib/utils/pinecone-helpers";
 import {
   createProjectSchema,
   ProjectFormState,
@@ -84,7 +84,7 @@ export async function deleteProject(id: string) {
   // we are missing validation and authorization here
   try {
     // First delete all vectors from Pinecone
-    await deleteEmbeddingsByFilter({ projectId: id });
+    await deleteVectorsByFilter({ projectId: id });
 
     // Then delete from database (this will cascade delete memories and documents)
     await projectRepository.delete(id);

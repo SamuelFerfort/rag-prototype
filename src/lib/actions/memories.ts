@@ -10,17 +10,16 @@ import {
   generateEmbedding,
   storeEmbedding,
   deleteEmbedding,
+  deleteEmbeddingsByFilter,
 } from "@/lib/embeddings";
-import { sanitizeId } from "@/lib/utils";
-import { handleError } from "../utils";
 import { redirect } from "next/navigation";
 import { getCurrentUserId } from "../session";
 import { z } from "zod";
-
-
-
-
-
+import { processMemoryContent } from "@/lib/utils/content-processor";
+import { handleError } from "../utils";
+import { sanitizeId } from "@/lib/utils/ids";
+import { storeInPinecone } from "./search";
+import { deleteVectorsByFilter } from "@/lib/utils/pinecone-helpers";
 
 // Create a memory with vector embedding
 export async function createMemory(data: CreateMemoryData) {
@@ -69,32 +68,26 @@ export async function updateMemory(data: UpdateMemoryData) {
       return { success: false, error: "Memory not found" };
     }
 
-    // Update the memory
+    // Update the memory in the database
     const memory = await memoryRepository.update(data);
 
-    // Update the vector embedding if content has changed
+    // If content has changed, update embeddings
     if (data.content && data.content !== currentMemory.content) {
-      // Generate a vector ID or use existing one
-      const vectorId =
-        currentMemory.vectorId || `memory_${sanitizeId(memory.id)}`;
+      // Delete existing embeddings for this memory
+      await deleteVectorsByFilter({ memoryId: memory.id });
 
-      // Generate and store new embeddings
-      const embedding = await generateEmbedding(data.content);
-      await storeEmbedding(vectorId, data.content, embedding, {
-        type: "memory",
-        memoryId: memory.id,
-        projectId: currentMemory.projectId,
-        categoryId: currentMemory.project.category.id,
-        categoryName: currentMemory.project.category.name,
-      });
+      // Process the content into chunks and generate embeddings
+      const { chunks, embeddings } = await processMemoryContent(
+        memory.id,
+        currentMemory.projectId,
+        currentMemory.project.category.id,
+        currentMemory.project.category.name,
+        memory.name,
+        data.content
+      );
 
-      // Update the memory with the vector ID if it's not set
-      if (!currentMemory.vectorId) {
-        await memoryRepository.update({
-          id: memory.id,
-          vectorId,
-        });
-      }
+      // Store chunks and embeddings in Pinecone
+      await storeInPinecone(chunks, embeddings);
     }
 
     // Revalidate relevant paths
@@ -121,10 +114,8 @@ export async function deleteMemory(id: string) {
       return { success: false, error: "Memory not found" };
     }
 
-    // Delete from Pinecone if there's a vectorId
-    if (memory.vectorId) {
-      await deleteEmbedding(memory.vectorId);
-    }
+    // Delete all chunks from Pinecone
+    await deleteVectorsByFilter({ memoryId: memory.id });
 
     // Delete from database
     await memoryRepository.delete(id);
@@ -137,7 +128,6 @@ export async function deleteMemory(id: string) {
     return handleError(error, "Failed to delete memory");
   }
 }
-
 
 // Simple schema for memory creation
 const createMemorySchema = z.object({
@@ -156,15 +146,12 @@ type MemoryFormState = {
   message?: string;
 };
 
-
 export async function createSimpleMemory(
   prevState: MemoryFormState,
   formData: FormData
 ): Promise<MemoryFormState> {
+  const userId = await getCurrentUserId();
 
-
-  const userId = await getCurrentUserId();  
-  
   try {
     const rawData = {
       name: formData.get("name"),
@@ -173,7 +160,7 @@ export async function createSimpleMemory(
 
     // Validate with Zod
     const validationResult = createMemorySchema.safeParse(rawData);
-    
+
     if (!validationResult.success) {
       return {
         status: "error",
@@ -181,10 +168,9 @@ export async function createSimpleMemory(
         message: "Por favor corrige los errores en el formulario",
       };
     }
-    
+
     // Data is valid, create the memory
     const data = validationResult.data;
-
 
     console.log("data", data);
     const memory = await memoryRepository.createSimple({
@@ -192,10 +178,10 @@ export async function createSimpleMemory(
       projectId: data.projectId,
       content: "",
     });
-    
+
     // Revalidate relevant paths
     revalidatePath(`/projects/${data.projectId}`);
-    
+
     return {
       status: "success",
       data: memory,

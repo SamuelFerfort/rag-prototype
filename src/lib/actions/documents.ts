@@ -4,12 +4,13 @@ import { revalidatePath } from "next/cache";
 import { documentRepository } from "@/lib/db/documents";
 import { projectRepository } from "@/lib/db/projects";
 import { handleError } from "@/lib/utils";
-import { sanitizeId } from "@/lib/utils";
+import { sanitizeId } from "@/lib/utils/ids";
 import { storeInPinecone } from "./search";
 import { deleteEmbedding } from "@/lib/embeddings";
 import { Chunk } from "@/lib/types/embeddings";
 import { pinecone } from "../services/pinecone";
-import { del } from '@vercel/blob';
+import { del } from "@vercel/blob";
+import { deleteVectorsByFilter } from "@/lib/utils/pinecone-helpers";
 
 // Types
 type UploadDocumentInput = {
@@ -94,38 +95,9 @@ export async function deleteDocument(id: string) {
       // Continue with deletion even if Blob deletion fails
     }
 
-    // Delete all embeddings from Pinecone with this document ID
+    // Delete all embeddings from Pinecone
     try {
-      // Connect to Pinecone
-      const index = pinecone.Index(process.env.PINECONE_INDEX!);
-      
-      // 1. Create a dummy vector (just zeros) with the same dimension as your embeddings
-      const dummyVector = Array(1536).fill(0); // 1536 for text-embedding-3-small
-
-      // 2. Search with this dummy vector, but filter by your document ID
-      const queryResponse = await index.query({
-        vector: dummyVector,
-        filter: { documentId: document.id },
-        topK: 1000,
-        includeMetadata: false
-      });
-      
-      // 3. Get the IDs of matching vectors
-      const vectorIds = queryResponse.matches.map(match => match.id);
-      
-      if (vectorIds.length > 0) {
-        // 4. Delete those vectors using deleteMany
-        // Processing in batches to avoid request size limits
-        const batchSize = 100;
-        for (let i = 0; i < vectorIds.length; i += batchSize) {
-          const batch = vectorIds.slice(i, i + batchSize);
-          // for multiple IDs:
-          await index.deleteMany(batch);
-        }
-        console.log(`Deleted ${vectorIds.length} embeddings for document ${document.id}`);
-      } else {
-        console.log(`No embeddings found for document ${document.id}`);
-      }
+      await deleteVectorsByFilter({ documentId: document.id });
     } catch (error) {
       console.error("Error deleting embeddings:", error);
       // Continue with document deletion even if embedding deletion fails

@@ -7,6 +7,7 @@ export type CreateMemoryData = {
   content: string;
   projectId: string;
   vectorId?: string;
+  categoryId?: string;
 };
 
 export type UpdateMemoryData = {
