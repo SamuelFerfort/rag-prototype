@@ -8,9 +8,15 @@ interface AskAIParams {
   query: string;
   projectId: string;
   categoryId?: string;
+  currentContent?: string;
 }
 
-export async function askAI({ query, projectId, categoryId }: AskAIParams) {
+export async function askAI({
+  query,
+  projectId,
+  categoryId,
+  currentContent = "",
+}: AskAIParams) {
   try {
     // 1. Generate embedding for the query
     const [queryEmbedding] = await generateEmbeddings([query]);
@@ -54,9 +60,20 @@ export async function askAI({ query, projectId, categoryId }: AskAIParams) {
 Context:
 ${relevantChunks.join("\n\n")}
 
-Query: ${query}
+${
+  currentContent
+    ? `Current document content:
+${currentContent}
 
-Provide a clear and detailed response based on the provided context. Your answer should be relevant to complete or enrich a professional document.`;
+`
+    : ""
+}Query: ${query}
+
+Provide a clear and detailed response based on the provided context. Your answer should be relevant to complete or enrich a professional document.${
+      currentContent
+        ? " Do not repeat information that is already in the current document content."
+        : ""
+    }`;
 
     // 6. Get completion from GPT-4
     const systemPrompt =

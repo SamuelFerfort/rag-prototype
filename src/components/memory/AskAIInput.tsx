@@ -12,12 +12,14 @@ interface AskAIInputProps {
   projectId: string;
   categoryId?: string;
   onResponse: (answer: string) => void;
+  currentContent?: string;
 }
 
 export function AskAIInput({
   projectId,
   categoryId,
   onResponse,
+  currentContent = "",
 }: AskAIInputProps) {
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -36,6 +38,7 @@ export function AskAIInput({
         query: query.trim(),
         projectId,
         categoryId,
+        currentContent,
       });
 
       if (!result.success) {

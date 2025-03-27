@@ -150,6 +150,7 @@ export default function MemoryEditor({
           projectId={projectId}
           categoryId={categoryId}
           onResponse={handleAIResponse}
+          currentContent={content}
         />
       </div>
     </div>
