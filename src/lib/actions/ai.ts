@@ -48,7 +48,6 @@ export async function askAI({ query, projectId, categoryId }: AskAIParams) {
 
     console.log(relevantChunks);
 
-    console.log("Ha cogido:", relevantChunks.length);
     // 5. Construct prompt with context
     const prompt = `Based on the following context, please answer the question. 
 Context:
