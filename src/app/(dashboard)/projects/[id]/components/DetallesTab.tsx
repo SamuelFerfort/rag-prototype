@@ -154,7 +154,6 @@ export default function DetallesTab({ projectId, documents }: DetallesTabProps) 
       <section>
         <h2 className="text-lg font-medium mb-4 border-b pb-2">Documentos</h2>
         
-        <DocumentUploader projectId={projectId} />
         
         <div className="mt-8">
           {documents && documents.length > 0 ? (
@@ -194,6 +193,8 @@ export default function DetallesTab({ projectId, documents }: DetallesTabProps) 
             </div>
           )}
         </div>
+        <DocumentUploader projectId={projectId} />
+
       </section>
     </div>
   );

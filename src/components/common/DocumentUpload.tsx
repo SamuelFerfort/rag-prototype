@@ -160,7 +160,7 @@ export function DocumentUploader({ projectId, onUploadComplete }: DocumentUpload
   const supportedFileTypes = ".pdf,.doc,.docx,.txt";
 
   return (
-    <div className="space-y-4 mt-6">
+    <div className="space-y-4 my-6">
       <div 
         className="border border-zinc-300 rounded-md p-6 text-center cursor-pointer"
         onDragOver={handleDragOver}
