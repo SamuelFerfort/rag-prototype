@@ -160,9 +160,9 @@ export function DocumentUploader({ projectId, onUploadComplete }: DocumentUpload
   const supportedFileTypes = ".pdf,.doc,.docx,.txt";
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 mt-6">
       <div 
-        className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-md p-6 text-center cursor-pointer"
+        className="border border-zinc-300 rounded-md p-6 text-center cursor-pointer"
         onDragOver={handleDragOver}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
@@ -207,20 +207,21 @@ export function DocumentUploader({ projectId, onUploadComplete }: DocumentUpload
               <p className="text-sm text-muted-foreground">{status}</p>
             </>
           ) : (
-            <div className="flex gap-2">
-              <Button
-                onClick={handleUpload}
-                className="bg-[#0f172a] hover:bg-[#1e293b]"
-              >
-                <Upload className="mr-2 h-4 w-4" />
-                Subir y procesar
-              </Button>
-              
+            <div className="flex gap-2 justify-end">
               <Button
                 variant="outline"
                 onClick={resetUploader}
+                className="rounded-md"
               >
                 Cancelar
+              </Button>
+              
+              <Button
+                onClick={handleUpload}
+                className="bg-[#09090b] text-white rounded-md"
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                Subir y procesar
               </Button>
             </div>
           )}

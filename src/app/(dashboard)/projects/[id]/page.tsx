@@ -20,7 +20,7 @@ export default async function ProjectPage({
   }
 
   return (
-    <div className="container space-y-8 w-full text-black ">
+    <div className=" space-y-8 w-full text-black ">
       {/* Project header with back button */}
       <div className="flex items-center border-b border-zinc-200 pb-5">
         <Button variant="ghost" size="icon" className="mr-2" asChild>

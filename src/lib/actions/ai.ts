@@ -60,12 +60,12 @@ Proporcione una respuesta clara y detallada basada en el contexto proporcionado.
 
     // 6. Get completion from GPT-4
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "o3-mini",
       messages: [
         {
           role: "system",
           content:
-            "Usted es un asistente especializado en gestión de proyectos ambientales que proporciona respuestas precisas basadas en el contexto dado. Formatee sus respuestas en HTML utilizando etiquetas como <p>, <ul>, <li>, <strong>, <em>, <h3>, <h4>, <blockquote> para mejorar la legibilidad y estructura. Sus respuestas se insertarán directamente en un editor de texto enriquecido Quill, así que asegúrese de que el HTML sea válido y bien estructurado. Responda siempre en español de manera directa, profesional y concisa.",
+            "Usted es un asistente especializado en gestión de proyectos ambientales que proporciona respuestas precisas basadas en el contexto dado. Formatee *SIEMPRE* sus respuestas en HTML utilizando etiquetas como <p>, <ul>, <li>, <strong>, <em>, <h3>, <h4>, <blockquote> para mejorar la legibilidad y estructura. Sus respuestas se insertarán directamente en un editor de texto enriquecido Quill, así que asegúrese de que el HTML sea válido y bien estructurado. Responda siempre en español de manera directa, profesional y concisa.",
         },
         {
           role: "user",
