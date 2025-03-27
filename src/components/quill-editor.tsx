@@ -62,7 +62,7 @@ export default function QuillEditor({
   }
 
   return (
-    <div className="min-h-[300px]">
+    <div className="min-h-[300px]" spellCheck={false}>
       <QuillNoSSR
         theme="snow"
         value={content}

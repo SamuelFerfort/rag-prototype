@@ -49,14 +49,14 @@ export async function askAI({ query, projectId, categoryId }: AskAIParams) {
     console.log(relevantChunks);
 
     // 5. Construct prompt with context
-    const prompt = `Basándose en el siguiente contexto, por favor responda a la pregunta o complete el contenido solicitado.
+    const prompt = `Based on the following context, please answer the question or complete the requested content.
 
-Contexto:
+Context:
 ${relevantChunks.join("\n\n")}
 
-Consulta: ${query}
+Query: ${query}
 
-Proporcione una respuesta clara y detallada basada en el contexto proporcionado. Su respuesta debe ser relevante para completar o enriquecer un documento profesional.`;
+Provide a clear and detailed response based on the provided context. Your answer should be relevant to complete or enrich a professional document.`;
 
     // 6. Get completion from GPT-4
     const completion = await openai.chat.completions.create({
@@ -65,15 +65,15 @@ Proporcione una respuesta clara y detallada basada en el contexto proporcionado.
         {
           role: "system",
           content:
-            "Usted es un asistente especializado en gestión de proyectos ambientales que proporciona respuestas precisas basadas en el contexto dado. Formatee *SIEMPRE* sus respuestas en HTML utilizando etiquetas como <p>, <ul>, <li>, <strong>, <em>, <h3>, <h4>, <blockquote> para mejorar la legibilidad y estructura. Sus respuestas se insertarán directamente en un editor de texto enriquecido Quill, así que asegúrese de que el HTML sea válido y bien estructurado. Responda siempre en español de manera directa, profesional y concisa.",
+            "You are a specialized assistant in environmental project management who provides accurate answers based on the given context. *ALWAYS* format your responses in HTML using tags such as <p>, <ul>, <li>, <strong>, <em>, <h3>, <h4>, <blockquote> to improve readability and structure. Your answers will be inserted directly into a Quill rich text editor, so make sure the HTML is valid and well-structured. Always respond in Spanish in a direct, professional, and concise manner.",
         },
         {
           role: "user",
           content: prompt,
         },
       ],
-      temperature: 0.7,
-      max_tokens: 500,
+      temperature: 0.4,
+      max_tokens: 1000,
     });
 
     return {
