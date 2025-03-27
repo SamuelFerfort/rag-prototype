@@ -26,7 +26,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -64,141 +63,137 @@ export function NewProjectDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto border border-zinc-200">
-        <DialogHeader className="mb-4">
-          <DialogTitle className="text-xl font-semibold text-zinc-900">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto border border-zinc-200">
+        <DialogHeader className="mb-6">
+          <DialogTitle className="text-2xl font-bold text-zinc-900">
             Nuevo Proyecto
           </DialogTitle>
-          <DialogDescription className="text-zinc-500">
+          <DialogDescription className="text-zinc-500 text-base">
             Crea un nuevo proyecto y asigna usuarios.
           </DialogDescription>
         </DialogHeader>
 
         <form action={formAction}>
-          <Card className="border border-zinc-200">
-            <CardContent className="pt-6">
-              <div className="grid gap-5">
-                <div>
-                  <Label
-                    htmlFor="name"
-                    className={`block text-sm font-medium mb-1.5 ${
-                      state.errors?.name ? "text-destructive" : "text-zinc-700"
-                    }`}
-                  >
-                    Nombre *
-                  </Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    placeholder="Nombre del proyecto"
-                    className={`w-full border-zinc-300 focus-visible:ring-zinc-900 ${
-                      state.errors?.name ? "border-destructive" : ""
-                    }`}
-                  />
-                  {state.errors?.name && (
-                    <p className="text-sm text-destructive mt-1">
-                      {state.errors.name[0]}
-                    </p>
-                  )}
-                </div>
+          <div className="grid gap-6 w-full px-1">
+            <div>
+              <Label
+                htmlFor="name"
+                className={`block text-sm font-medium mb-1.5 ${
+                  state.errors?.name ? "text-destructive" : "text-zinc-700"
+                }`}
+              >
+                Nombre *
+              </Label>
+              <Input
+                id="name"
+                name="name"
+                placeholder="Nombre del proyecto"
+                className={`w-full ${
+                  state.errors?.name ? "border-destructive" : ""
+                }`}
+              />
+              {state.errors?.name && (
+                <p className="text-sm text-destructive mt-1">
+                  {state.errors.name[0]}
+                </p>
+              )}
+            </div>
 
-                <div>
-                  <Label
-                    htmlFor="categoryId"
-                    className={`block text-sm font-medium mb-1.5 ${
-                      state.errors?.categoryId ? "text-destructive" : "text-zinc-700"
-                    }`}
-                  >
-                    Categoría *
-                  </Label>
-                  <Select
-                    name="categoryId"
-                    defaultValue={state.data?.categoryId}
-                  >
-                    <SelectTrigger
-                      className={`w-full border-zinc-300 focus:ring-zinc-900 ${
-                        state.errors?.categoryId ? "border-destructive" : ""
-                      }`}
-                    >
-                      <SelectValue placeholder="Selecciona una categoría" />
-                    </SelectTrigger>
-                    <SelectContent className="border-zinc-200">
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {state.errors?.categoryId && (
-                    <p className="text-sm text-destructive mt-1">
-                      {state.errors.categoryId[0]}
-                    </p>
-                  )}
-                </div>
+            <div>
+              <Label
+                htmlFor="categoryId"
+                className={`block text-sm font-medium mb-1.5 ${
+                  state.errors?.categoryId ? "text-destructive" : "text-zinc-700"
+                }`}
+              >
+                Categoría *
+              </Label>
+              <Select
+                name="categoryId"
+                defaultValue={state.data?.categoryId}
+              >
+                <SelectTrigger
+                  className={`w-full border-zinc-300 focus:ring-zinc-900 ${
+                    state.errors?.categoryId ? "border-destructive" : ""
+                  }`}
+                >
+                  <SelectValue placeholder="Selecciona una categoría" />
+                </SelectTrigger>
+                <SelectContent className="border-zinc-200">
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {state.errors?.categoryId && (
+                <p className="text-sm text-destructive mt-1">
+                  {state.errors.categoryId[0]}
+                </p>
+              )}
+            </div>
 
-                <div>
-                  <Label
-                    htmlFor="userIds"
-                    className={`block text-sm font-medium mb-1.5 ${
-                      state.errors?.userIds ? "text-destructive" : "text-zinc-700"
-                    }`}
-                  >
-                    Usuarios asignados * (aparte de ti)
-                  </Label>
-                  <div className="border border-zinc-300 rounded-md p-3 max-h-40 overflow-y-auto">
-                    {users.length === 0 ? (
-                      <p className="text-sm text-zinc-500 text-center py-2">
-                        No hay usuarios disponibles
-                      </p>
-                    ) : (
-                      <div className="space-y-2">
-                        {users.map((user) => (
-                          <div
-                            key={user.id}
-                            className="flex items-center space-x-2 py-1"
-                          >
-                            <input
-                              type="checkbox"
-                              id={`user-${user.id}`}
-                              name="userIds"
-                              value={user.id}
-                              className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900"
-                            />
-                            <label
-                              htmlFor={`user-${user.id}`}
-                              className="text-sm text-zinc-700"
-                            >
-                              {user.name}
-                            </label>
-                          </div>
-                        ))}
+            <div>
+              <Label
+                htmlFor="userIds"
+                className={`block text-sm font-medium mb-1.5 ${
+                  state.errors?.userIds ? "text-destructive" : "text-zinc-700"
+                }`}
+              >
+                Usuarios asignados * (aparte de ti)
+              </Label>
+              <div className="border border-zinc-300 rounded-md p-3 max-h-40 overflow-y-auto w-full">
+                {users.length === 0 ? (
+                  <p className="text-sm text-zinc-500 text-center py-2">
+                    No hay usuarios disponibles
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {users.map((user) => (
+                      <div
+                        key={user.id}
+                        className="flex items-center space-x-2 py-1"
+                      >
+                        <input
+                          type="checkbox"
+                          id={`user-${user.id}`}
+                          name="userIds"
+                          value={user.id}
+                          className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900"
+                        />
+                        <label
+                          htmlFor={`user-${user.id}`}
+                          className="text-sm text-zinc-700"
+                        >
+                          {user.name}
+                        </label>
                       </div>
-                    )}
+                    ))}
                   </div>
-                  {state.errors?.userIds && (
-                    <p className="text-sm text-destructive mt-1">
-                      {state.errors.userIds[0]}
-                    </p>
-                  )}
-                </div>
+                )}
               </div>
-            </CardContent>
-          </Card>
+              {state.errors?.userIds && (
+                <p className="text-sm text-destructive mt-1">
+                  {state.errors.userIds[0]}
+                </p>
+              )}
+            </div>
+          </div>
 
-          <DialogFooter className="mt-6 gap-2">
+          <DialogFooter className="mt-8 gap-2">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isPending}
-              className="border-zinc-300 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900"
+              className="border-zinc-300 cursor-pointer text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
-              className="bg-zinc-900 hover:bg-zinc-800 text-white"
+              className="text-white cursor-pointer"
               disabled={isPending}
             >
               {isPending ? (

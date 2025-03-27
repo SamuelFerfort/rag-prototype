@@ -49,13 +49,14 @@ export async function askAI({ query, projectId, categoryId }: AskAIParams) {
     console.log(relevantChunks);
 
     // 5. Construct prompt with context
-    const prompt = `Based on the following context, please answer the question. 
-Context:
+    const prompt = `Basándose en el siguiente contexto, por favor responda a la pregunta o complete el contenido solicitado.
+
+Contexto:
 ${relevantChunks.join("\n\n")}
 
-Question: ${query}
+Consulta: ${query}
 
-Please provide a clear and concise answer based on the context provided.`;
+Proporcione una respuesta clara y detallada basada en el contexto proporcionado. Su respuesta debe ser relevante para completar o enriquecer un documento profesional.`;
 
     // 6. Get completion from GPT-4
     const completion = await openai.chat.completions.create({
@@ -64,7 +65,7 @@ Please provide a clear and concise answer based on the context provided.`;
         {
           role: "system",
           content:
-            "You are a helpful assistant that provides accurate answers based on the given context. Format your responses in HTML using appropriate tags like <p>, <ul>, <li>, <strong>, <em>, etc. for better readability. Answer directly and concisely.",
+            "Usted es un asistente especializado en gestión de proyectos ambientales que proporciona respuestas precisas basadas en el contexto dado. Formatee sus respuestas en HTML utilizando etiquetas como <p>, <ul>, <li>, <strong>, <em>, <h3>, <h4>, <blockquote> para mejorar la legibilidad y estructura. Sus respuestas se insertarán directamente en un editor de texto enriquecido Quill, así que asegúrese de que el HTML sea válido y bien estructurado. Responda siempre en español de manera directa, profesional y concisa.",
         },
         {
           role: "user",

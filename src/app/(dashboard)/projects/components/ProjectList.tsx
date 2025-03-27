@@ -45,9 +45,8 @@ export default function ProjectList({
           />
           <Button
             onClick={() => setOpen(true)}
-            className="bg-zinc-900 hover:bg-zinc-800 text-white"
+            className="cursor-pointer text-white"
           >
-            <Plus className="h-4 w-4 mr-2" />
             Nuevo
           </Button>
         </div>
