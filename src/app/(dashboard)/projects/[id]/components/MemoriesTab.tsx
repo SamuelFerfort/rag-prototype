@@ -7,7 +7,7 @@ import { format } from "date-fns";
 import { NewMemoryDialog } from "./NewMemoryDialog";
 import Link from "next/link";
 import type { Memory } from "@prisma/client";
-
+import MemoryCard from "./MemoryCard";
 interface MemoriesTabProps {
   projectId: string;
   memories: Memory[];
@@ -18,29 +18,7 @@ export default function MemoriesTab({ projectId, memories }: MemoriesTabProps) {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {/* Memory cards */}
       {memories.map((memory) => (
-        <Link href={`/projects/${projectId}/memory/${memory.id}`} key={memory.id}>
-          <Card className="border shadow-sm h-full hover:bg-accent/50 transition-colors">
-            <CardHeader className="flex flex-row items-start justify-between pb-2">
-              <h3 className="font-medium">{memory.name}</h3>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </CardHeader>
-            <CardContent className="pb-2">
-              <p className="text-sm text-muted-foreground line-clamp-2">
-                {memory.content
-                  ? memory.content.replace(/<[^>]*>/g, "").slice(0, 80) + (memory.content.length > 80 ? "..." : "")
-                  : "Sin contenido"}
-              </p>
-            </CardContent>
-            <CardFooter className="pt-2">
-              <div className="flex items-center text-xs text-muted-foreground">
-                <Calendar className="h-3 w-3 mr-1" />
-                {format(new Date(memory.createdAt), "dd/MM/yyyy HH:mm:ss")}
-              </div>
-            </CardFooter>
-          </Card>
-        </Link>
+       <MemoryCard key={memory.id} memory={memory} projectId={projectId} />
       ))}
 
       {/* Add new memory card */}
