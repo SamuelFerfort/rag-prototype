@@ -1,7 +1,6 @@
 "use client";
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import type { FC } from "react";
 import MemoriesTab from "./MemoriesTab";
 import DetallesTab from "./DetallesTab";
 
