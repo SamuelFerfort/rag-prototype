@@ -60,7 +60,7 @@ Proporcione una respuesta clara y detallada basada en el contexto proporcionado.
 
     // 6. Get completion from GPT-4
     const completion = await openai.chat.completions.create({
-      model: "o3-mini",
+      model: "chatgpt-4o-latest",
       messages: [
         {
           role: "system",
