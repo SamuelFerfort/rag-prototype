@@ -63,7 +63,7 @@ export function DeleteDocumentButton({ documentId, documentName }: DeleteDocumen
           <AlertDialogHeader>
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción eliminará permanentemente el documento "{documentName}" y todos sus contenidos indexados.
+              Esta acción eliminará permanentemente el documento &quot;{documentName}&quot; y todos sus contenidos indexados.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

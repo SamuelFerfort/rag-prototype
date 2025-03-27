@@ -19,8 +19,8 @@ export async function createProject(
   // This function already redirects if we don't have a user
   const userId = await getCurrentUserId();
 
-  const name = formData.get("name") as String;
-  const categoryId = formData.get("categoryId") as String;
+  const name = formData.get("name") as string;
+  const categoryId = formData.get("categoryId") as string;
   const userIds = formData.getAll("userIds").map((id) => id.toString());
   userIds.push(userId);
 
