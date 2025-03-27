@@ -29,12 +29,10 @@ export default function ProjectList({
     <div className="space-y-8 w-full text-black">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-zinc-200 pb-5">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-zinc-900">
+          <h1 className="text-4xl font-bold tracking-tight text-zinc-900">
             Proyectos
           </h1>
-          <p className="text-zinc-500 mt-1">
-            Gestión de los proyectos y memorias
-          </p>
+        
         </div>
         <div className="flex w-full md:w-auto gap-3 mt-3 md:mt-0">
           <Input
