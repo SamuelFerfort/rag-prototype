@@ -54,7 +54,7 @@ export function NewUserDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-[#09090b] hover:bg-[#3f3f46]">Nuevo</Button>
+        <Button className="cursor-pointer">Nuevo</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px] border border-zinc-200">
         <DialogHeader className="mb-6">

@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Calendar, File as FileIcon, FileText, X } from "lucide-react";
+import { FileText } from "lucide-react";
 import { format } from "date-fns";
 import { DeleteDocumentButton } from "@/components/common/DeleteDocumentButton";
 import { DocumentUploader } from "@/components/common/DocumentUpload";
@@ -109,11 +108,7 @@ export default function DetallesTab({ project, allUsers }: DetallesTabProps) {
             {/* --- Status --- */}
             <div className="space-y-2">
               <Label htmlFor="status">Estado</Label>
-              <Select
-                name="status" // Add name attribute
-                defaultValue={project.status} // Use defaultValue
-                // No need for aria-invalid here unless Select component supports it well
-              >
+              <Select name="status" defaultValue={project.status}>
                 <SelectTrigger className="w-full border-zinc-300">
                   <SelectValue placeholder="Seleccionar estado" />
                 </SelectTrigger>
@@ -203,10 +198,10 @@ export default function DetallesTab({ project, allUsers }: DetallesTabProps) {
               <Label htmlFor="clientName">Nombre</Label>
               <Input
                 id="clientName"
-                name="clientName" // Add name attribute
+                name="clientName"
                 placeholder="Nombre del cliente"
                 className="w-full border-zinc-300"
-                defaultValue={project.clientName || ""} // Use defaultValue
+                defaultValue={project.clientName || ""}
                 aria-invalid={!!state.errors?.clientName}
                 aria-describedby="clientName-error"
               />
@@ -222,9 +217,9 @@ export default function DetallesTab({ project, allUsers }: DetallesTabProps) {
               <Label htmlFor="clientLocation">Localidad</Label>
               <Input
                 id="clientLocation"
-                name="clientLocation" // Add name attribute
+                name="clientLocation"
                 className="w-full border-zinc-300"
-                defaultValue={project.clientLocation || ""} // Use defaultValue
+                defaultValue={project.clientLocation || ""}
                 aria-invalid={!!state.errors?.clientLocation}
                 aria-describedby="clientLocation-error"
               />
@@ -238,10 +233,7 @@ export default function DetallesTab({ project, allUsers }: DetallesTabProps) {
             {/* --- Client Type --- */}
             <div className="space-y-2">
               <Label htmlFor="clientType">Tipo de cliente</Label>
-              <Select
-                name="clientType" // Add name attribute
-                defaultValue={project.clientType} // Use defaultValue
-              >
+              <Select name="clientType" defaultValue={project.clientType}>
                 <SelectTrigger className="w-full border-zinc-300">
                   <SelectValue placeholder="Seleccionar" />
                 </SelectTrigger>
@@ -266,9 +258,9 @@ export default function DetallesTab({ project, allUsers }: DetallesTabProps) {
               </Label>
               <Textarea
                 id="clientDescription"
-                name="clientDescription" // Add name attribute
+                name="clientDescription"
                 className="w-full min-h-[100px] border-zinc-300"
-                defaultValue={project.clientDescription || ""} // Use defaultValue
+                defaultValue={project.clientDescription || ""}
                 aria-invalid={!!state.errors?.clientDescription}
                 aria-describedby="clientDescription-error"
               />

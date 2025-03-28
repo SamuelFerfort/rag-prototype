@@ -57,7 +57,7 @@ const SignIn = () => {
             setLoading(true);
           },
           onSuccess: (ctx) => {
-            setSuccess("Registrado correctamente");
+            setSuccess("Sesión iniciada correctamente");
             router.replace("/");
           },
           onError: (ctx) => {
