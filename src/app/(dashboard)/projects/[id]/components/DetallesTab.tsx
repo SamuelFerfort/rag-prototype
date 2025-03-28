@@ -30,8 +30,9 @@ import {
 import { updateProject } from "@/lib/actions/projects";
 import { useActionState } from "react";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { toast } from "sonner";
 import { UserBasic } from "@/lib/types/users";
+import { useEffect } from "react";
 
 interface DetallesTabProps extends ProjectTabsProps {
   allUsers: UserBasic[];
@@ -50,27 +51,21 @@ export default function DetallesTab({ project, allUsers }: DetallesTabProps) {
     initialProjectState
   );
 
+  // Display toast notifications when state changes
+  useEffect(() => {
+    if (state.status === "error" && state.message) {
+      toast.error(state.message);
+    }
+    if (state.status === "success" && state.message) {
+      toast.success(state.message);
+    }
+  }, [state]);
+
   const defaultUserIds = project.users.map((user) => user.userId);
 
   return (
     <div className="space-y-8">
       {/* Información generales */}
-
-      {/* --- Form Action Feedback --- */}
-      {state.status === "error" && state.message && (
-        <Alert variant="destructive">
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{state.message}</AlertDescription>
-        </Alert>
-      )}
-      {state.status === "success" && state.message && (
-        <Alert variant="default">
-          {" "}
-          {/* Assuming you have a success variant */}
-          <AlertTitle>Success</AlertTitle>
-          <AlertDescription>{state.message}</AlertDescription>
-        </Alert>
-      )}
 
       {/* --- Update Project Form --- */}
       {/* Pass the formAction dispatch function to the form */}
@@ -280,7 +275,7 @@ export default function DetallesTab({ project, allUsers }: DetallesTabProps) {
             {/* Add type="submit" and handle pending state */}
             <Button
               type="submit"
-              className="bg-[#09090b] text-white rounded-md"
+              className="cursor-pointer"
               disabled={isPending} // Disable when pending
               aria-disabled={isPending}
             >
