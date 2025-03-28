@@ -19,6 +19,6 @@ export const userRepository = {
       },
     });
   },
-
+  
   // Other user-related methods as needed
 };

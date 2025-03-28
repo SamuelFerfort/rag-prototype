@@ -32,7 +32,6 @@ export default function ProjectList({
           <h1 className="text-4xl font-bold tracking-tight text-zinc-900">
             Proyectos
           </h1>
-        
         </div>
         <div className="flex w-full md:w-auto gap-3 mt-3 md:mt-0">
           <Input

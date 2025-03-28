@@ -72,13 +72,7 @@ const SignIn = () => {
   };
 
   return (
-    <CardWrapper
-      cardTitle="Iniciar sesión"
-      cardDescription="Ingresa tu correo electrónico para iniciar sesión en tu cuenta"
-      cardFooterDescription="¿No tienes una cuenta?"
-      cardFooterLink="/signup"
-      cardFooterLinkTitle="Registrarse"
-    >
+    <CardWrapper cardTitle="Iniciar sesión" cardDescription="">
       <Form {...form}>
         <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
           <FormField

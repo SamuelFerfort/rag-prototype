@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Calendar, File as FileIcon, X } from "lucide-react";
+import { Calendar, File as FileIcon, FileText, X } from "lucide-react";
 import { format } from "date-fns";
 import { DeleteDocumentButton } from "@/components/common/DeleteDocumentButton";
 import { DocumentUploader } from "@/components/common/DocumentUpload";
@@ -315,10 +316,14 @@ export default function DetallesTab({ project, allUsers }: DetallesTabProps) {
                 {project.documents.map((document) => (
                   <TableRow key={document.id}>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <FileIcon className="h-5 w-5 text-blue-500" />
+                      <Link
+                        href={document.path}
+                        target="_blank"
+                        className="flex items-center gap-2"
+                      >
+                        <FileText className="h-5 w-5 text-blue-500" />
                         <span>{document.name}</span>
-                      </div>
+                      </Link>
                     </TableCell>
                     <TableCell>
                       {(document.size / (1024 * 1024)).toFixed(2)} MB
