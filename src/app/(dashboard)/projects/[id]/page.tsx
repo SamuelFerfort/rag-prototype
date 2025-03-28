@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProjectTabs } from "./components/ProjectTabs";
+import { userRepository } from "@/lib/db/users";
 
 export default async function ProjectPage({
   params,
@@ -12,8 +13,12 @@ export default async function ProjectPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const userId = await getCurrentUserId();
+
+  // This redirects if there is no user
+  await getCurrentUserId();
+
   const project = await projectRepository.findProjectWithContent(id);
+  const allUsers = await userRepository.findAll();
 
   if (!project) {
     notFound();
@@ -32,12 +37,7 @@ export default async function ProjectPage({
       </div>
 
       {/* Tabs */}
-      <ProjectTabs 
-        projectId={project.id}
-        projectName={project.name}
-        memories={project.memories}
-        documents={project.documents || []}
-      />
+      <ProjectTabs project={project} allUsers={allUsers} />
     </div>
   );
 }

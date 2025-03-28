@@ -2,12 +2,17 @@
 
 import { revalidatePath } from "next/cache";
 import { projectRepository } from "@/lib/db/projects";
-import { handleError, handleProjectError } from "../utils";
-import { CreateProjectData, UpdateProjectData } from "../types/projects";
+import {
+  handleError,
+  handleProjectError,
+  handleUpdateProjectError,
+} from "../utils";
+import { UpdateProjectActionState } from "../types/projects";
 import { deleteVectorsByFilter } from "@/lib/utils/pinecone-helpers";
 import {
   createProjectSchema,
   ProjectFormState,
+  updateProjectSchema,
 } from "@/helpers/zod/projects-schema";
 import { getCurrentUserId } from "../session";
 
@@ -62,21 +67,74 @@ export async function createProject(
 }
 
 // Update a project
-export async function updateProject(data: UpdateProjectData) {
-  // we are missing validation and authorization here
-  try {
-    const project = await projectRepository.update(data);
+export async function updateProject(
+  prevState: UpdateProjectActionState,
+  formData: FormData
+): Promise<UpdateProjectActionState> {
+  const userId = await getCurrentUserId();
 
+  try {
+    const rawData = {
+      projectId: formData.get("projectId") as string,
+      name: formData.get("name") as string,
+      categoryId: formData.get("categoryId") as string, // Get categoryId
+      description: formData.get("description") as string,
+      status: formData.get("status") as string, // Get status
+      clientName: formData.get("clientName") as string,
+      clientLocation: formData.get("clientLocation") as string,
+      clientType: formData.get("clientType") as string,
+      clientDescription: formData.get("clientDescription") as string,
+      // Get all selected user IDs
+      userIds: formData.getAll("userIds").map((id) => id.toString()),
+    };
+
+    console.log("rawData", rawData);
+
+    const validationResult = updateProjectSchema.safeParse(rawData);
+
+    if (!validationResult.success) {
+      console.error("Validation Errors:", validationResult.error.flatten());
+      return {
+        status: "error",
+        // Add a user-friendly message
+        message: "Validation failed. Please check the fields below.",
+        errors: validationResult.error.flatten().fieldErrors,
+        updatedProject: null, // Explicitly set null
+      };
+    }
+
+    console.log("validationResult", validationResult);
+
+    const project = await projectRepository.update(validationResult.data);
+
+    if (!project) {
+      // Handle case where update didn't return a project (e.g., transaction failed silently)
+      throw new Error("Actualización de proyecto falló inesperadamente.");
+    }
+
+    console.log("Project updated in repository:", project);
     // Revalidate relevant paths
     revalidatePath("/projects");
-    revalidatePath(`/projects/${data.id}`);
+    revalidatePath(`/projects/${project?.id}`);
 
     return {
-      success: true,
-      data: project,
+      status: "success",
+      message: "Proyecto actualizado exitosamente",
+      errors: null,
+      updatedProject: project,
     };
   } catch (error) {
-    return handleError(error, "Failed to update project");
+    console.error("Update Project Error:", error);
+    const { message } = handleUpdateProjectError(
+      error,
+      "Failed to update project"
+    ); // Use your error handler
+    return {
+      status: "error",
+      message,
+      errors: null,
+      updatedProject: null,
+    };
   }
 }
 

@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { ProjectFormState } from "@/helpers/zod/projects-schema";
+import { UpdateProjectActionState } from "@/lib/types/projects";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -40,6 +41,21 @@ export function handleError(error: unknown, defaultMessage: string) {
   return {
     success: false,
     error: errorMessage,
+  };
+}
+
+export function handleUpdateProjectError(
+  error: unknown,
+  defaultMessage: string
+): UpdateProjectActionState {
+  console.error(error);
+  const errorMessage = error instanceof Error ? error.message : defaultMessage;
+
+  return {
+    status: "error",
+    message: errorMessage,
+    errors: {},
+    updatedProject: null,
   };
 }
 

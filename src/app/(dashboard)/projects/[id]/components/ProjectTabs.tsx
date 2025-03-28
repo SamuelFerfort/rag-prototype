@@ -3,39 +3,38 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import MemoriesTab from "./MemoriesTab";
 import DetallesTab from "./DetallesTab";
+import { ProjectTabsProps } from "@/lib/types/projects";
+import { User } from "@prisma/client";
+import { UserBasic } from "@/lib/types/users";
 
-interface ProjectTabsProps {
-  projectId: string;
-  projectName: string;
-  memories: any[];
-  documents: any[];
-}
-
-export function ProjectTabs({ projectId, projectName, memories, documents }: ProjectTabsProps) {
+export function ProjectTabs({
+  project,
+  allUsers,
+}: ProjectTabsProps & { allUsers: UserBasic[] }) {
   return (
     <Tabs defaultValue="memorias" className="w-full">
       <TabsList className="bg-background mb-6 rounded-full border">
-        <TabsTrigger 
-          value="memorias" 
+        <TabsTrigger
+          value="memorias"
           className=" data-[state=active]:bg-black data-[state=active]:text-white"
         >
           Memorias
         </TabsTrigger>
-        <TabsTrigger 
-          value="detalles" 
+        <TabsTrigger
+          value="detalles"
           className="data-[state=active]:bg-black data-[state=active]:text-white"
         >
           Detalles
         </TabsTrigger>
       </TabsList>
-      
+
       <TabsContent value="memorias">
-        <MemoriesTab projectId={projectId} memories={memories} />
+        <MemoriesTab projectId={project.id} memories={project.memories} />
       </TabsContent>
-      
+
       <TabsContent value="detalles">
-        <DetallesTab projectId={projectId} documents={documents} />
+        <DetallesTab project={project} allUsers={allUsers} />
       </TabsContent>
     </Tabs>
   );
-} 
+}

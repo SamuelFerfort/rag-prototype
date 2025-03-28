@@ -23,140 +23,285 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  ProjectTabsProps,
+  UpdateProjectActionState,
+} from "@/lib/types/projects";
+import { updateProject } from "@/lib/actions/projects";
+import { useActionState } from "react";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { UserBasic } from "@/lib/types/users";
 
-interface DetallesTabProps {
-  projectId: string;
-  documents: any[];
+interface DetallesTabProps extends ProjectTabsProps {
+  allUsers: UserBasic[];
 }
 
-export default function DetallesTab({ projectId, documents }: DetallesTabProps) {
+const initialProjectState: UpdateProjectActionState = {
+  status: "idle",
+  message: null,
+  errors: null,
+  updatedProject: null,
+};
+
+export default function DetallesTab({ project, allUsers }: DetallesTabProps) {
+  const [state, updateProjectAction, isPending] = useActionState(
+    updateProject,
+    initialProjectState
+  );
+
+  const defaultUserIds = project.users.map((user) => user.userId);
+
   return (
     <div className="space-y-8">
       {/* Información generales */}
-      <section>
-        <h2 className="text-lg font-medium mb-4 border-b pb-2">Información general</h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="space-y-2">
-            <label htmlFor="nombre" className="block text-sm font-medium">
-              Nombre
-            </label>
-            <Input id="nombre" placeholder="Nombre del proyecto" className="w-full border-zinc-300" />
+      {/* --- Form Action Feedback --- */}
+      {state.status === "error" && state.message && (
+        <Alert variant="destructive">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{state.message}</AlertDescription>
+        </Alert>
+      )}
+      {state.status === "success" && state.message && (
+        <Alert variant="default">
+          {" "}
+          {/* Assuming you have a success variant */}
+          <AlertTitle>Success</AlertTitle>
+          <AlertDescription>{state.message}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* --- Update Project Form --- */}
+      {/* Pass the formAction dispatch function to the form */}
+      <form action={updateProjectAction} className="space-y-8">
+        {/* --- General Information Section --- */}
+        <section>
+          <h2 className="text-lg font-medium mb-4 border-b pb-2">
+            Información general
+          </h2>
+          {/* Hidden input for projectId */}
+          <input type="hidden" name="projectId" value={project.id} />
+          {/* Hidden input for categoryId as it's disabled */}
+          <input type="hidden" name="categoryId" value={project.categoryId} />
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* --- Name --- */}
+            <div className="space-y-2">
+              <Label htmlFor="name">Nombre</Label> {/* Use Label */}
+              <Input
+                id="name"
+                name="name" // Add name attribute
+                placeholder="Nombre del proyecto"
+                defaultValue={project.name} // Use defaultValue
+                className="w-full border-zinc-300"
+                aria-invalid={!!state.errors?.name} // Indicate invalid state
+                aria-describedby="name-error"
+              />
+              {state.errors?.name && (
+                <p id="name-error" className="text-sm text-red-500">
+                  {state.errors.name.join(", ")}
+                </p>
+              )}
+            </div>
+
+            {/* --- Status --- */}
+            <div className="space-y-2">
+              <Label htmlFor="status">Estado</Label>
+              <Select
+                name="status" // Add name attribute
+                defaultValue={project.status} // Use defaultValue
+                // No need for aria-invalid here unless Select component supports it well
+              >
+                <SelectTrigger className="w-full border-zinc-300">
+                  <SelectValue placeholder="Seleccionar estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  {/* Ensure values match Prisma enum names */}
+                  <SelectItem value="ACTIVO">Activo</SelectItem>
+                  <SelectItem value="INACTIVO">Inactivo</SelectItem>
+                  {/* Add other statuses if they exist */}
+                </SelectContent>
+              </Select>
+              {state.errors?.status && (
+                <p className="text-sm text-red-500">
+                  {state.errors.status.join(", ")}
+                </p>
+              )}
+            </div>
+
+            {/* --- Category (Display Only) --- */}
+            <div className="space-y-2">
+              <Label htmlFor="categoria">Categoría</Label>
+              {/* Keep it disabled if not editable, value sent via hidden input */}
+              <Input
+                id="categoria"
+                value={project.category.name}
+                disabled
+                className="w-full border-zinc-300 bg-gray-100" // Style disabled
+              />
+              {/* No error display needed if it's not submitted/validated */}
+            </div>
+
+            {/* --- Assigned Users (Multi-Select) --- */}
+            <div className="space-y-2 md:col-span-3">
+              <Label htmlFor="userIds">Usuarios asignados</Label>
+              {/* Use native multi-select or a custom component */}
+              <select
+                id="userIds"
+                name="userIds" // Critical: Name for formData.getAll('userIds')
+                multiple // Enable multiple selections
+                defaultValue={defaultUserIds} // Set default selected users
+                className="w-full border-zinc-300 rounded-md p-2 h-32 border" // Basic styling
+                aria-invalid={!!state.errors?.userIds}
+                aria-describedby="userIds-error"
+              >
+                {allUsers.map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.name} ({user.email})
+                  </option>
+                ))}
+              </select>
+              {state.errors?.userIds && (
+                <p id="userIds-error" className="text-sm text-red-500">
+                  {state.errors.userIds.join(", ")}
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Mantén presionada la tecla Ctrl (o Cmd en Mac) para seleccionar
+                múltiples usuarios.
+              </p>
+            </div>
+
+            {/* --- Description --- */}
+            <div className="space-y-2 md:col-span-3">
+              <Label htmlFor="description">Descripción corta</Label>
+              <Textarea
+                id="description"
+                name="description" // Add name attribute
+                className="w-full min-h-[100px] border-zinc-300"
+                defaultValue={project.description || ""} // Use defaultValue, handle null
+                aria-invalid={!!state.errors?.description}
+                aria-describedby="description-error"
+              />
+              {state.errors?.description && (
+                <p id="description-error" className="text-sm text-red-500">
+                  {state.errors.description.join(", ")}
+                </p>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* --- Client Information Section --- */}
+        <section>
+          <h2 className="text-lg font-medium mb-4 border-b pb-2">Cliente</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* --- Client Name --- */}
+            <div className="space-y-2">
+              <Label htmlFor="clientName">Nombre</Label>
+              <Input
+                id="clientName"
+                name="clientName" // Add name attribute
+                placeholder="Nombre del cliente"
+                className="w-full border-zinc-300"
+                defaultValue={project.clientName || ""} // Use defaultValue
+                aria-invalid={!!state.errors?.clientName}
+                aria-describedby="clientName-error"
+              />
+              {state.errors?.clientName && (
+                <p id="clientName-error" className="text-sm text-red-500">
+                  {state.errors.clientName.join(", ")}
+                </p>
+              )}
+            </div>
+
+            {/* --- Client Location --- */}
+            <div className="space-y-2">
+              <Label htmlFor="clientLocation">Localidad</Label>
+              <Input
+                id="clientLocation"
+                name="clientLocation" // Add name attribute
+                className="w-full border-zinc-300"
+                defaultValue={project.clientLocation || ""} // Use defaultValue
+                aria-invalid={!!state.errors?.clientLocation}
+                aria-describedby="clientLocation-error"
+              />
+              {state.errors?.clientLocation && (
+                <p id="clientLocation-error" className="text-sm text-red-500">
+                  {state.errors.clientLocation.join(", ")}
+                </p>
+              )}
+            </div>
+
+            {/* --- Client Type --- */}
+            <div className="space-y-2">
+              <Label htmlFor="clientType">Tipo de cliente</Label>
+              <Select
+                name="clientType" // Add name attribute
+                defaultValue={project.clientType} // Use defaultValue
+              >
+                <SelectTrigger className="w-full border-zinc-300">
+                  <SelectValue placeholder="Seleccionar" />
+                </SelectTrigger>
+                <SelectContent>
+                  {/* Ensure values match Prisma enum names */}
+                  <SelectItem value="PUBLICO">Público</SelectItem>
+                  <SelectItem value="PRIVADO">Privado</SelectItem>
+                  {/* Add other types if they exist */}
+                </SelectContent>
+              </Select>
+              {state.errors?.clientType && (
+                <p className="text-sm text-red-500">
+                  {state.errors.clientType.join(", ")}
+                </p>
+              )}
+            </div>
+
+            {/* --- Client Description --- */}
+            <div className="space-y-2 md:col-span-3">
+              <Label htmlFor="clientDescription">
+                Descripción sobre el cliente
+              </Label>
+              <Textarea
+                id="clientDescription"
+                name="clientDescription" // Add name attribute
+                className="w-full min-h-[100px] border-zinc-300"
+                defaultValue={project.clientDescription || ""} // Use defaultValue
+                aria-invalid={!!state.errors?.clientDescription}
+                aria-describedby="clientDescription-error"
+              />
+              {state.errors?.clientDescription && (
+                <p
+                  id="clientDescription-error"
+                  className="text-sm text-red-500"
+                >
+                  {state.errors.clientDescription.join(", ")}
+                </p>
+              )}
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <label htmlFor="estado" className="block text-sm font-medium">
-              Estado
-            </label>
-            <Select defaultValue="activo">
-              <SelectTrigger className="w-full border-zinc-300">
-                <SelectValue placeholder="Seleccionar estado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="activo">Activo</SelectItem>
-                <SelectItem value="inactivo">Inactivo</SelectItem>
-                <SelectItem value="pendiente">Pendiente</SelectItem>
-              </SelectContent>
-            </Select>
+          {/* --- Submit Button --- */}
+          <div className="flex justify-end mt-6">
+            {/* Add type="submit" and handle pending state */}
+            <Button
+              type="submit"
+              className="bg-[#09090b] text-white rounded-md"
+              disabled={isPending} // Disable when pending
+              aria-disabled={isPending}
+            >
+              {isPending ? "Guardando..." : "Guardar Cambios"}
+            </Button>
           </div>
-
-          <div className="space-y-2">
-            <label htmlFor="categoria" className="block text-sm font-medium">
-              Categoría
-            </label>
-            <Select>
-              <SelectTrigger className="w-full border-zinc-300">
-                <SelectValue placeholder="Categoría del proyecto" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="desarrollo">Desarrollo</SelectItem>
-                <SelectItem value="diseno">Diseño</SelectItem>
-                <SelectItem value="marketing">Marketing</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2 md:col-span-3">
-            <label htmlFor="usuarios" className="block text-sm font-medium">
-              Usuarios asignados
-            </label>
-            <Select>
-              <SelectTrigger className="w-full border-zinc-300">
-                <SelectValue placeholder="Sin asignar" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="user1">Usuario 1</SelectItem>
-                <SelectItem value="user2">Usuario 2</SelectItem>
-                <SelectItem value="user3">Usuario 3</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2 md:col-span-3">
-            <label htmlFor="descripcion" className="block text-sm font-medium">
-              Descripción corta
-            </label>
-            <Textarea id="descripcion" className="w-full min-h-[100px] border-zinc-300" />
-          </div>
-        </div>
-      </section>
-
-      {/* Cliente */}
-      <section>
-        <h2 className="text-lg font-medium mb-4 border-b pb-2">Cliente</h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="space-y-2">
-            <label htmlFor="nombreCliente" className="block text-sm font-medium">
-              Nombre
-            </label>
-            <Input id="nombreCliente" placeholder="Nombre del cliente" className="w-full border-zinc-300" />
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="localidad" className="block text-sm font-medium">
-              Localidad
-            </label>
-            <Input id="localidad" className="w-full border-zinc-300" />
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="tipoCliente" className="block text-sm font-medium">
-              Tipo de cliente
-            </label>
-            <Select>
-              <SelectTrigger className="w-full border-zinc-300">
-                <SelectValue placeholder="Seleccionar" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="empresa">Empresa</SelectItem>
-                <SelectItem value="individual">Individual</SelectItem>
-                <SelectItem value="gobierno">Gobierno</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2 md:col-span-3">
-            <label htmlFor="descripcionCliente" className="block text-sm font-medium">
-              Descripción sobre el cliente
-            </label>
-            <Textarea id="descripcionCliente" className="w-full min-h-[100px] border-zinc-300" />
-          </div>
-        </div>
-
-        {/* Save button - directly below client description */}
-        <div className="flex justify-end mt-6">
-          <Button className="bg-[#09090b] text-white rounded-md">Guardar</Button>
-        </div>
-      </section>
-
+        </section>
+      </form>
       {/* Documentos - as a separate section */}
       <section>
         <h2 className="text-lg font-medium mb-4 border-b pb-2">Documentos</h2>
-        
-        
+
         <div className="mt-8">
-          {documents && documents.length > 0 ? (
+          {project.documents && project.documents.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -167,7 +312,7 @@ export default function DetallesTab({ projectId, documents }: DetallesTabProps) 
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {documents.map((document) => (
+                {project.documents.map((document) => (
                   <TableRow key={document.id}>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -175,8 +320,15 @@ export default function DetallesTab({ projectId, documents }: DetallesTabProps) 
                         <span>{document.name}</span>
                       </div>
                     </TableCell>
-                    <TableCell>{(document.size / (1024 * 1024)).toFixed(2)} MB</TableCell>
-                    <TableCell>{format(new Date(document.createdAt), "dd/MM/yyyy HH:mm:ss")}</TableCell>
+                    <TableCell>
+                      {(document.size / (1024 * 1024)).toFixed(2)} MB
+                    </TableCell>
+                    <TableCell>
+                      {format(
+                        new Date(document.createdAt),
+                        "dd/MM/yyyy HH:mm:ss"
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">
                       <DeleteDocumentButton
                         documentId={document.id}
@@ -193,9 +345,8 @@ export default function DetallesTab({ projectId, documents }: DetallesTabProps) 
             </div>
           )}
         </div>
-        <DocumentUploader projectId={projectId} />
-
+        <DocumentUploader projectId={project.id} />
       </section>
     </div>
   );
-} 
+}
