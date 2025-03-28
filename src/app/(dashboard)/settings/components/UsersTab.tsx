@@ -16,16 +16,36 @@ import { UserBasic } from "@/lib/types/users";
 import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Avatar } from "@/components/ui/avatar";
 
-
+type SortDirection = "asc" | "desc" | null;
 
 export default function UsersTab({ users }: { users: UserBasic[] }) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
 
+  const toggleSort = () => {
+    setSortDirection((current) => {
+      if (current === null) return "asc";
+      if (current === "asc") return "desc";
+      return null;
+    });
+  };
+
+  // First filter by search term
   const filteredUsers = users.filter(
     (user: UserBasic) =>
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Then sort if a sort direction is selected
+  const sortedUsers = [...filteredUsers].sort((a, b) => {
+    if (sortDirection === null) return 0;
+    if (sortDirection === "asc") {
+      return a.name.localeCompare(b.name);
+    } else {
+      return b.name.localeCompare(a.name);
+    }
+  });
 
   return (
     <>
@@ -44,17 +64,29 @@ export default function UsersTab({ users }: { users: UserBasic[] }) {
           <TableHeader>
             <TableRow className="bg-[#f8f8f8] hover:bg-[#f8f8f8]">
               <TableHead className="font-medium">
-                <div className="flex items-center gap-1">
+                <button
+                  onClick={toggleSort}
+                  className="flex items-center gap-1 hover:text-primary focus:outline-none"
+                >
                   Nombre
-                  <ArrowUpDown className="h-4 w-4" />
-                </div>
+                  <ArrowUpDown
+                    className={`h-4 w-4 ${sortDirection ? "text-primary" : ""}`}
+                  />
+                  {sortDirection && (
+                    <span className="sr-only">
+                      {sortDirection === "asc"
+                        ? "ordenado ascendente"
+                        : "ordenado descendente"}
+                    </span>
+                  )}
+                </button>
               </TableHead>
               <TableHead className="font-medium">Email</TableHead>
               <TableHead className="w-12"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredUsers.map((user) => (
+            {sortedUsers.map((user) => (
               <TableRow key={user.id} className="hover:bg-[#f8f8f8]">
                 <TableCell>
                   <div className="flex items-center gap-3">
@@ -81,7 +113,7 @@ export default function UsersTab({ users }: { users: UserBasic[] }) {
 
       <div className="flex items-center justify-between mt-4 text-sm text-[#71717a]">
         <div>
-          {filteredUsers.length} de {users.length} usuarios
+          {sortedUsers.length} de {users.length} usuarios
         </div>
         <div className="flex gap-2">
           <Button

@@ -1,11 +1,8 @@
 "use client";
 
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Calendar, MoreVertical, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
+import { Card } from "@/components/ui/card";
+import { Plus } from "lucide-react";
 import { NewMemoryDialog } from "./NewMemoryDialog";
-import Link from "next/link";
 import type { Memory } from "@prisma/client";
 import MemoryCard from "./MemoryCard";
 interface MemoriesTabProps {
@@ -18,7 +15,7 @@ export default function MemoriesTab({ projectId, memories }: MemoriesTabProps) {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {/* Memory cards */}
       {memories.map((memory) => (
-       <MemoryCard key={memory.id} memory={memory} projectId={projectId} />
+        <MemoryCard key={memory.id} memory={memory} projectId={projectId} />
       ))}
 
       {/* Add new memory card */}
@@ -32,4 +29,4 @@ export default function MemoriesTab({ projectId, memories }: MemoriesTabProps) {
       </Card>
     </div>
   );
-} 
+}

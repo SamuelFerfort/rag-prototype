@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 import { createSimpleMemory } from "@/lib/actions/memories";
 import { toast } from "sonner";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -25,11 +25,11 @@ interface NewMemoryDialogProps {
 export function NewMemoryDialog({ projectId, children }: NewMemoryDialogProps) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
-  
-  const [state, formAction, isPending] = useActionState(
-    createSimpleMemory,
-    { status: "idle", errors: {} }
-  );
+
+  const [state, formAction, isPending] = useActionState(createSimpleMemory, {
+    status: "idle",
+    errors: {},
+  });
 
   useEffect(() => {
     if (state.status === "success" && state.data?.id) {
@@ -49,21 +49,23 @@ export function NewMemoryDialog({ projectId, children }: NewMemoryDialogProps) {
           </Button>
         )}
       </DialogTrigger>
-      
-      <DialogContent className="sm:max-w-[700px] text-black">
+
+      <DialogContent className="sm:max-w-[700px] ">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-semibold">Nueva memoria</DialogTitle>
+          <DialogTitle className="text-2xl font-semibold">
+            Nueva memoria
+          </DialogTitle>
         </DialogHeader>
-        
+
         <form action={formAction} className="space-y-6">
           <input type="hidden" name="projectId" value={projectId} />
-          
+
           <div className="space-y-3">
             <Label htmlFor="name" className="text-base">
               Nombre
             </Label>
-            <Input 
-              id="name" 
+            <Input
+              id="name"
               name="name"
               className="w-full text-base py-6"
               disabled={isPending}
@@ -71,12 +73,14 @@ export function NewMemoryDialog({ projectId, children }: NewMemoryDialogProps) {
               autoFocus
             />
             {state.errors?.name && (
-              <p className="text-sm text-destructive mt-1">{state.errors.name[0]}</p>
+              <p className="text-sm text-destructive mt-1">
+                {state.errors.name[0]}
+              </p>
             )}
           </div>
-          
-          <Button 
-            type="submit" 
+
+          <Button
+            type="submit"
             disabled={isPending}
             className="w-full bg-black hover:bg-black/90 text-base py-6"
           >
